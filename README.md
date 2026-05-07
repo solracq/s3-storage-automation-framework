@@ -20,7 +20,40 @@ This test automation framework validates an S3-compatible object storage service
 - Retry behavior for temporary service unavailability
 - Audit/log validation from container logs
 
-# Folder Structure
+## Initial folder structure
+
+```text
+can_messages_automation/
+├── configs/
+│   └── test_environment.example.json
+├── dbc/
+├── docs/
+│   └── STEP_BY_STEP.md
+├── scripts/
+│   └── setup_vcan.sh
+├── src/
+│   └── can_framework/
+│       ├── __init__.py
+│       ├── bus.py
+│       ├── message.py
+│       ├── simulated_ecu.py
+│       └── validators.py
+├── tests/
+│   ├── conftest.py
+│   ├── integration/
+│   |   ├── simple_example.py
+│   │   ├── test_vcan_loopback.py
+|   |   └── test_simulated_ecu_reaction.py
+│   ├── smoke/
+│   │   └── test_framework_smoke.py
+│   └── unit/
+│       └── test_validators.py
+├── pytest.ini
+└── requirements.txt
+```
+
+## Quick start
+
 ```text
 s3-storage-automation-framework/
 ├── app/
