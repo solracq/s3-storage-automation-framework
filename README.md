@@ -21,6 +21,7 @@ This test automation framework validates an S3-compatible object storage service
 - Audit/log validation from container logs
 
 # Folder Structure
+```text
 s3-storage-automation-framework/
 ├── app/
 │   └── main.py    -> FastAPI service
@@ -38,3 +39,4 @@ s3-storage-automation-framework/
 ├── pytest.ini
 ├── .gitignore
 └── requirements.txt
+```
