@@ -23,17 +23,18 @@ This test automation framework validates an S3-compatible object storage service
 # Folder Structure
 s3-storage-automation-framework/
 ├── app/
-│   └── main.py              ← FastAPI service
+│   └── main.py    ← FastAPI service
 ├── framework/
 │   ├── s3/
-│   │   └── s3_client.py     ← Reusable Boto3 wrapper
-|   |   ├── s3_resource.py
+│   │    ├── s3_client.py  ← Reusable Boto3 wrapper
+│   │    ├── s3_resource.py
 │   └── utils/
-│       └── helpers.py
+│           └── helpers.py
 ├── tests/
-│   ├── conftest.py          ← Fixtures (MinIO setup)
+│   ├── conftest.py    ← Fixtures (MinIO setup)
 │   ├── unit/
 │   ├── smoke/
 │   └── integration/
+├── pytest.ini
 ├── .gitignore
 └── requirements.txt
