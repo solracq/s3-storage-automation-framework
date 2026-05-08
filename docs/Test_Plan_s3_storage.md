@@ -5,14 +5,27 @@ The objective of this testing is to verify and validate that the S3 implementati
 
 Since the focus of the testing will be on the validation of the interaction with the backend of the software using the S3 implementation, the testing will involve API calls. Thus, the QA team will validate specifically the functional behaviour, the usability, the reliability, security and performance of the programming interface of the product.
 
-## 2. Test Criteria
-In this section, it is defined the different criteria to stop the test cycle or to stop the step to the next development cycle.
+## 2. Entry, Suspension, and Exit Criteria
+In this section, it is defined the different testing criteria.
 
-### 2.1. Stop Criteria
-If the 40% of the test cases fail, the QA team will stop testing until the Dev team fixes the blocking issues.
+### 2.1 Entry Criteria
+- MinIO container is running.
+- FastAPI service is available.
+- Required environment variables are configured.
+- Test data and sample files are available.
+- Smoke tests can be executed locally.
 
-### 2.2 Exit Criteria
-If the 98% of all the test cases, including smoke and regression tests, pass; then, the QA team will be ready to sign-off the validation stage of the feature. 
+### 2.2 Suspension Criteria
+- More than 40% of critical test cases fail.
+- The API service is unavailable.
+- MinIO cannot be reached.
+- Test credentials are invalid or missing.
+
+### 2.3 Exit Criteria
+- 98% of planned test cases pass.
+- All critical and high-severity defects are resolved or accepted.
+- Smoke and regression tests pass.
+- Test results are documented.
 
 ## 3. Test Resources
 The validation of the feature will require the following resources:
@@ -40,12 +53,24 @@ The installation of the software will require the following:
     - httpx
     - requests
 
-## 5. Test Coverage
+## 5. Scope
+
+### In Scope
+- API validation for upload, download, delete, metadata, and presigned URLs.
+- MinIO bucket readiness and object storage workflows.
+- Negative testing for missing buckets, missing objects, invalid credentials, and service unavailability.
+- Basic performance and reliability validation.
+
+### Out of Scope
+- AWS IAM validation.
+- Real AWS S3 billing, replication, lifecycle policies, and multi-region behavior.
+- Frontend/UI testing.
+
+## 6. Test Coverage
 - Unit tests for framework utilities
 - Smoke tests for service and bucket readiness
 - Integration tests for upload/download/delete workflows
 - Negative tests for missing objects, empty files, invalid credentials, and unavailable services
-EOF
 
 ### Test Scenarios
 tests/unit/
@@ -66,10 +91,36 @@ tests/negative/
   test_missing_bucket.py
   test_missing_object.py
 
-## 6. Schedule & Estimates
-It is estimated to complete test design on the first sprint after feature complete. Then, test case execution can be performed in the following sprints. One sprint will be reserved for Automaiton testing. The potential release of the product it is scheduled in the next X months so the validation of the product is expected to be completed in X months.
+### Test Data
 
-## 7. Test Deliverables
+The test suite will use:
+- Small text files
+- Empty files
+- Files with metadata
+- Unsupported file types, if validation exists
+- Large files for basic upload/download validation
+- Missing object keys for negative scenarios
+
+### 8. Defect Management
+
+Defects will be documented using GitHub Issues. Each defect should include:
+- Summary
+- Steps to reproduce
+- Expected result
+- Actual result
+- Severity
+- Logs or screenshots, if applicable
+
+## 9. Schedule & Estimates
+This project is planned as a personal automation framework. Test design, implementation, and execution will be completed iteratively as framework features are added.
+
+Estimated phases:
+- Phase 1: Environment setup and smoke tests
+- Phase 2: Core API workflow tests
+- Phase 3: Negative and reliability tests
+- Phase 4: Regression execution and documentation
+
+## 10. Test Deliverables
 * Before testing:
     * Test plan
     * Test strategy
