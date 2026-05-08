@@ -4,12 +4,12 @@ Amazon Simple Storage Service (Amazon S3) is an object storage service that prov
 
 This test automation framework validates an S3-compatible object storage service running locally.
 
-# System under test
+## System under test
 * MinIO container
 * Small FastAPI wrapper service that uploads/downloads files to S3
 * Boto3 (AWS S3 SDK for Python) test client
 
-# What this validates:
+## What this validates:
 - Bucket creation/deletion
 - Object upload/download/delete
 - Metadata validation
