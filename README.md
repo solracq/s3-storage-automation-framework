@@ -7,7 +7,7 @@ This test automation framework validates an S3-compatible object storage service
 ## System under test
 * MinIO container (local S3-compatible without AWS IAM.)
 * Small FastAPI wrapper service that uploads/downloads files to S3.
-* Boto3 (AWS S3 SDK for Python) test client. Boto3 will use a custom non-AWS S3-compatible endpoint_url.
+* Boto3 (AWS S3 SDK for Python) test client. Boto3 uses a custom non-AWS S3-compatible endpoint_url.
 
 ## What this validates:
 - Bucket creation/deletion
