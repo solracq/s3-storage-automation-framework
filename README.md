@@ -58,19 +58,14 @@ s3_storage_automation/
 3. Manual validation using curl to test setup works well.
 
 ### Launch MinIO with Docker
-1. Start docker container
-docker run -d \
-  --name minio \
-  -p 9000:9000 \
-  -p 9001:9001 \
-  -e MINIO_ROOT_USER=minioadmin \
-  -e MINIO_ROOT_PASSWORD=minioadmin \
-  quay.io/minio/minio server /data --console-address ":9001"
-
+1. Use docker-compose.yaml to launch container
 2. Verify container is running:
 docker ps
 
-3. Open browser to see the MinIO web console, http://localhost:9001
+3. Open browser to see
+- MinIO S3 API, http://localhost:9000
+- MinIO web console, http://localhost:9001
+- FastAPI service, http://localhost:8000
 Login with minioadmin / minioadmin123
 
 
