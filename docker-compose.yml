@@ -1,0 +1,34 @@
+services:
+  minio:
+    image: minio/minio:latest
+    container_name: portfolio-minio
+    command: server /data --console-address ":9001"
+    env_file:
+      - .env
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  storage-api:
+    build:
+      context: ./app/storage_api
+    container_name: portfolio-storage-api
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    depends_on:
+      minio:
+        condition: service_healthy
+    volumes:
+      - ./app/storage_api:/app
+
+volumes:
+  minio-data:
