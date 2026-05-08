@@ -42,4 +42,7 @@ s3-storage-automation-framework/
 └── requirements.txt
 ```
 
-## Quick start
+## Environment Setup
+1. MinIO S3-compatible storage in Docker.
+2. FastAPI wrapper service that uploads/downloads files to MinIO.
+3. Manual validation using curl to test setup works well.
