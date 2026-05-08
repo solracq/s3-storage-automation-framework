@@ -92,7 +92,6 @@ tests/negative/
   test_missing_object.py
 
 ### Test Data
-
 The test suite will use:
 - Small text files
 - Empty files
@@ -101,8 +100,7 @@ The test suite will use:
 - Large files for basic upload/download validation
 - Missing object keys for negative scenarios
 
-### 8. Defect Management
-
+### Defect Management
 Defects will be documented using GitHub Issues. Each defect should include:
 - Summary
 - Steps to reproduce
