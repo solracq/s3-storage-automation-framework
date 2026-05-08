@@ -23,22 +23,32 @@ This test automation framework validates an S3-compatible object storage service
 ## Initial folder structure
 
 ```text
-s3-storage-automation-framework/
+s3_storage_automation/
 ├── app/
-│   └── main.py    -> FastAPI service
-├── framework/
+│   └── storage_api/
+│       ├── main.py
+│       ├── settings.py
+│       └── Dockerfile
+├── s3_lib/
+│   ├── __init__.py
 │   ├── s3/
-│   │    ├── s3_client.py  -> Reusable Boto3 wrapper
-│   │    ├── s3_resource.py
+│   │   ├── __init__.py
+│   │   ├── s3_client.py
+│   │   └── s3_resource.py
 │   └── utils/
-│           └── helpers.py
+│       ├── __init__.py
+│       └── helpers.py
 ├── tests/
-│   ├── conftest.py    -> Fixtures (MinIO setup)
+│   ├── conftest.py
 │   ├── unit/
 │   ├── smoke/
 │   └── integration/
-├── pytest.ini
+├── scripts/
+├── docs/
+├── .env
 ├── .gitignore
+├── docker-compose.yml
+├── pytest.ini
 └── requirements.txt
 ```
 
@@ -46,3 +56,21 @@ s3-storage-automation-framework/
 1. MinIO S3-compatible storage in Docker.
 2. FastAPI wrapper service that uploads/downloads files to MinIO.
 3. Manual validation using curl to test setup works well.
+
+### Launch MinIO with Docker
+1. Start docker container
+docker run -d \
+  --name minio \
+  -p 9000:9000 \
+  -p 9001:9001 \
+  -e MINIO_ROOT_USER=minioadmin \
+  -e MINIO_ROOT_PASSWORD=minioadmin \
+  quay.io/minio/minio server /data --console-address ":9001"
+
+2. Verify container is running:
+docker ps
+
+3. Open browser to see the MinIO web console, http://localhost:9001
+Login with minioadmin / minioadmin123
+
+
