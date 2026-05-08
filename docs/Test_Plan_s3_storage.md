@@ -1,12 +1,12 @@
 # Test Plan:
 
 ## 1. Test Objectives
-The objective of this testing is to verify and validate that the S3 implementation on the software backend works as expected and defined according to the user’s business requirements. 
+The objective of this testing is to verify and validate that the S3 implementation in the  backend works as expected and meets the defined business and technical requirements. 
 
 Since the focus of the testing will be on the validation of the interaction with the backend of the software using the S3 implementation, the testing will involve API calls. Thus, the QA team will validate specifically the functional behaviour, the usability, the reliability, security and performance of the programming interface of the product.
 
 ## 2. Entry, Suspension, and Exit Criteria
-In this section, it is defined the different testing criteria.
+This section defines the criteria for starting, suspending, and completing the test cycle.
 
 ### 2.1 Entry Criteria
 - MinIO container is running.
@@ -16,13 +16,13 @@ In this section, it is defined the different testing criteria.
 - Smoke tests can be executed locally.
 
 ### 2.2 Suspension Criteria
-- More than 40% of critical test cases fail.
+- If 40% or more of the test cases fail.
 - The API service is unavailable.
 - MinIO cannot be reached.
 - Test credentials are invalid or missing.
 
 ### 2.3 Exit Criteria
-- 98% of planned test cases pass.
+- If 98% of all test cases pass.
 - All critical and high-severity defects are resolved or accepted.
 - Smoke and regression tests pass.
 - Test results are documented.
@@ -63,7 +63,7 @@ The installation of the software will require the following:
 
 ### Out of Scope
 - AWS IAM validation.
-- Real AWS S3 billing, replication, lifecycle policies, and multi-region behavior.
+- Real AWS S3 billing, replication, lifecycle policies, and multi-region behaviour.
 - Frontend/UI testing.
 
 ## 6. Test Coverage

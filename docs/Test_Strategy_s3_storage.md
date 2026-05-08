@@ -4,7 +4,7 @@
 This test strategy defines the overall testing approach for the S3 Storage Automation Framework. It explains the scope, test levels, test types, environments, risks, tools, and quality practices used to validate a local S3-compatible storage workflow.
 
 ## 2. Test Scope
-The validation of the interaction to the software using S3 SDK will require testing the software interface to the backend through API calls. Therefore, the scope of this testing is to validate the software API and the software backend of the product.
+Validation will focus on interactions with the software through the S3 SDK. Therefore, the scope of this testing is to validate the software API and the software backend of the product.
 
 Since the focus of this S3-storage validation is on the backend, the validation of the User Interface of the software is out of scope.
 
@@ -16,7 +16,7 @@ Since the focus of this S3-storage validation is on the backend, the validation 
 - Presigned URL generation
 - Negative cases: wrong credentials, missing bucket, missing object, invalid file type
 - Storage quota simulation
-- Retry behavior for temporary service unavailability
+- Retry behaviour for temporary service unavailability
 - Audit/log validation from container logs
 
 ## 3. System Specifications
@@ -28,18 +28,18 @@ For the system under test, we won't be using a formal AWS S3 Server. Instead, pa
 - Boto3 (AWS S3 SDK for Python) test client. Boto3 uses a custom non-AWS S3-compatible endpoint_url.
 
 ## 4. Roles
-The Dev and QA teams will be involved on the product development and testing.
+The development and QA roles are responsible for implementation, validation, and test automation.
 Carlos Quiroz - Software Developer Engineer in Test
 
 ## 5. Test Levels
 - Unit Testing: Validates framework utilities and configuration helpers.
 - Smoke Testing: Confirms MinIO, buckets, and service health are ready.
-- Integration Testing: Validates upload, download, delete, metadata, and presigned URL workflows.
+- Integration Testing: Validates upload, download, delete, metadata, and URL workflows.
 - Negative Testing: Validates expected failures for invalid credentials, missing buckets, missing objects, and unavailable services.
 - Regression Testing: Re-runs core scenarios after framework or service changes.
 
 ## 6. Testing Types
-The following testing types will be performed on verification and validation of the product.
+The following testing types will be used to verify and validate the product.
 - API Testing (Functional)
 - Security Testing
 - Reliability Testing
