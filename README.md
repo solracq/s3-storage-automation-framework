@@ -66,14 +66,17 @@ s3_storage_automation/
 2. Verify container is running:
 docker ps
 
-3. Open browser to see
-- MinIO S3 API, http://localhost:9000
-- MinIO web console, http://localhost:9001
-- FastAPI service, http://localhost:8000
+3. Open browser to see local services
+|     Service       |             URL            |
+|-------------------|----------------------------|
+|   FastAPI Service |   http://localhost:8000    |
+|   MinIO S3 API    |   http://localhost:9000    |
+| MinIO Web Console |   http://localhost:9001    |
 
-4. Teardown services.
+
+4. Teardown services. The command below stops containers and delete MinIO sotored data
 ```text
-   docker-compose down
+   docker-compose down -v
 ```
 
 

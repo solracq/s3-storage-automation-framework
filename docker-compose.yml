@@ -2,6 +2,7 @@ services:
   minio:
     image: minio/minio:latest
     container_name: portfolio-minio
+    restart: unless-stopped
     command: server /data --console-address ":9001"
     env_file:
       - .env
