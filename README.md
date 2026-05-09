@@ -58,20 +58,27 @@ s3_storage_automation/
 3. Manual validation using curl to test setup works well.
 
 ### Launch MinIO with Docker
-1. Build and start environment in a terminal and keep it open. This will star the 'portfolio-minio' and the 'portfolio-storage-api' services defined in the docker-composer.yml. Login with minioadmin / minioadmin123
+1. Build and start environment in a terminal and keep it open. This will star the 'portfolio-minio' and the 'portfolio-storage-api' services defined in the docker-composer.yml.
 ```text
-   docker compose up --build
+docker compose up --build
+```
+If rebuilding:
+```text
+docker compose build --no-cache storage-api
+docker compose up
 ```
 
 2. Verify container is running:
 docker ps
 
-3. Open browser to see local services
+3. Open browser to see local services. Login with minioadmin / minioadmin123
+```text
 |     Service       |             URL            |
 |-------------------|----------------------------|
 |   FastAPI Service |   http://localhost:8000    |
 |   MinIO S3 API    |   http://localhost:9000    |
 | MinIO Web Console |   http://localhost:9001    |
+```
 
 
 4. Teardown services. The command below stops containers and delete MinIO sotored data

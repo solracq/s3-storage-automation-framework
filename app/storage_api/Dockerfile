@@ -4,13 +4,13 @@ WORKDIR /app
 
 COPY requirements.txt .
 
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --progress-bar off -r requirements.txt
 
-COPY app/storage_api ./app/storage_api
+COPY app ./app
 COPY s3_lib ./s3_lib
 
-WORKDIR /app/app/storage_api
+ENV PYTHONPATH=/app
 
 EXPOSE 8000
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+CMD ["uvicorn", "app.storage_api.main:app", "--host", "0.0.0.0", "--port", "8000"]
