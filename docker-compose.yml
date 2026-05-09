@@ -2,7 +2,6 @@ services:
   minio:
     image: minio/minio:latest
     container_name: portfolio-minio
-    restart: unless-stopped
     command: server /data --console-address ":9001"
     env_file:
       - .env
@@ -19,7 +18,8 @@ services:
 
   storage-api:
     build:
-      context: ./app/storage_api
+      context: .
+      dockerfile: app/storage_api/Dockerfile
     container_name: portfolio-storage-api
     env_file:
       - .env
@@ -29,7 +29,8 @@ services:
       minio:
         condition: service_healthy
     volumes:
-      - ./app/storage_api:/app
+      - ./app/storage_api:/app/app/storage_api
+      - ./s3_lib:/app/s3_lib
 
 volumes:
   minio-data:

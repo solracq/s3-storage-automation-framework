@@ -6,7 +6,10 @@ COPY requirements.txt .
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+COPY app/storage_api ./app/storage_api
+COPY s3_lib ./s3_lib
+
+WORKDIR /app/app/storage_api
 
 EXPOSE 8000
 
