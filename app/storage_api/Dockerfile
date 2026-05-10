@@ -7,7 +7,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --progress-bar off -r requirements.txt
 
 COPY app ./app
-COPY s3_lib ./s3_lib
+COPY lib ./lib
 
 ENV PYTHONPATH=/app
 

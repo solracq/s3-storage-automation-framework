@@ -30,7 +30,7 @@ services:
         condition: service_healthy
     volumes:
       - ./app/storage_api:/app/app/storage_api
-      - ./s3_lib:/app/s3_lib
+      - ./lib:/app/lib
 
 volumes:
   minio-data:
