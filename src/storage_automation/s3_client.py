@@ -5,9 +5,9 @@ from botocore.exceptions import ClientError
 from app.storage_api.settings import Settings
 
 
-class Client(S3):
+class S3Client(S3):
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.bucket_name = Settings.minio_bucket_name
         self.s3_client = boto3.client( # customizing how the S3 client talks to the MinIO service.
             "s3", # AWS service identifier, 's3' as the low-level client to build.

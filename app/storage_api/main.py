@@ -2,7 +2,7 @@ from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
 from botocore.exceptions import ClientError
 
-from src.storage_automation.client import S3StorageClient
+from src.storage_automation.s3_client import S3Client
 
 app = FastAPI(
     title="Portfolio S3 Storage API",
@@ -10,7 +10,7 @@ app = FastAPI(
     version="0.1.0",
 )
 
-storage = S3StorageClient()
+storage = S3Client()
 
 
 @app.get("/health")
@@ -22,8 +22,9 @@ def health_check():
 
 
 @app.post("/buckets/bootstrap")
-def bootstrap_bucket():
-    storage.ensure_bucket_exists()
+def bootstrap_bucket(bucket_name: str):
+    if not storage.bucket_exists(bucket_name):
+        storage.create_bucket(bucket_name)
     return {
         "bucket": storage.bucket_name,
         "status": "ready",
