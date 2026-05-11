@@ -7,7 +7,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --progress-bar off -r requirements.txt
 
 COPY app ./app
-COPY lib ./lib
+COPY src ./src
 
 ENV PYTHONPATH=/app
 

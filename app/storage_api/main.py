@@ -2,7 +2,7 @@ from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
 from botocore.exceptions import ClientError
 
-from lib.s3.client import S3StorageClient
+from src.storage_automation.client import S3StorageClient
 
 app = FastAPI(
     title="Portfolio S3 Storage API",

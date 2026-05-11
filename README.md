@@ -29,9 +29,9 @@ s3_storage_automation/
 │       ├── main.py
 │       ├── settings.py
 │       └── Dockerfile
-├── lib/
+├── src/
 │   ├── __init__.py
-│   ├── s3/
+│   ├── storage_automation/
 │   │   ├── __init__.py
 │   │   ├── s3.py
 │   │   ├── client.py
