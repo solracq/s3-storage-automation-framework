@@ -27,7 +27,7 @@ class S3Client(S3):
             self.s3_client.head_bucket(Bucket=bucket_name)
             return True
         except ClientError as error:
-            self.s3_client.create_bucket(Bucket=bucket_name)
+            return False
 
     def create_bucket(self, bucket_name: str) -> dict:
         try:

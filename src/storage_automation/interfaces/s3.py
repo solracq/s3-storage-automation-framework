@@ -8,6 +8,10 @@ class S3(ABC):
         pass
 
     @abstractmethod
+    def bucket_exists(self, bucket_name:str) -> bool:
+        pass
+
+    @abstractmethod
     def create_bucket(self, bucket_name: str) -> dict:
         pass
 
