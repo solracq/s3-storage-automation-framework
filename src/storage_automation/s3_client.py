@@ -1,23 +1,26 @@
-from io import BytesIO
 import boto3
-from src.storage_automation.s3 import S3
+from src.storage_automation.interfaces.s3 import S3
 from botocore.client import Config
 from botocore.exceptions import ClientError
-from src.storage_automation.settings import Settings
+from app.storage_api.settings import Settings
 
 
 class Client(S3):
 
     def __init__(self):
         self.bucket_name = Settings.minio_bucket_name
-        self.s3_client = boto3.client(
-            "storage_automation",
+        self.s3_client = boto3.client( # customizing how the S3 client talks to the MinIO service.
+            "s3", # AWS service identifier, 's3' as the low-level client to build.
             endpoint_url=Settings.s3_endpoint_url,
             aws_access_key_id=Settings.aws_access_key_id,
             aws_secret_access_key=Settings.aws_secret_access_key,
             region_name=Settings.aws_region,
-            config=Config(signature_version="s3v4"),
+            config=Config(signature_version="s3v4"), # signing S3 API calls with AWS Signature Ver 4.
         )
+
+    @property
+    def access_type(self):
+        return "S3 Client"
 
     def bucket_exists(self, bucket_name: str) -> bool:
         try:

@@ -2,6 +2,11 @@ from abc import ABC, abstractmethod
 
 class S3(ABC):
 
+    @property
+    @abstractmethod
+    def access_type(self):
+        pass
+
     @abstractmethod
     def create_bucket(self, bucket_name: str) -> dict:
         pass
@@ -44,8 +49,4 @@ class S3(ABC):
 
     @abstractmethod
     def download_object(self, bucket_name: str, object_key: str) -> dict:
-        pass
-
-    @abstractmethod
-    def delete_object(self, bucket_name: str, object_key: str) -> dict:
         pass
