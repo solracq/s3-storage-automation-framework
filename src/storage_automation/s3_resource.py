@@ -21,8 +21,12 @@ class S3Resource(S3):
     def access_type(self):
         return "S3 Resource"
 
-    def bucket_exist(self):
-        self.
+    def bucket_exist(self, bucket_name: str) -> bool:
+        try:
+            self.s3_resource.Bucket(bucket_name).exists()
+            return True
+        except ClientError as error:
+            return False
 
     def create_bucket(self, bucket_name: str) -> dict:
         try:
