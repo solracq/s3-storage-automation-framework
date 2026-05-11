@@ -52,5 +52,5 @@ class S3(ABC):
         pass
 
     @abstractmethod
-    def download_object(self, bucket_name: str, object_key: str) -> dict:
+    def download_object(self, bucket_name: str, object_key: str, file_path: str) -> dict:
         pass
