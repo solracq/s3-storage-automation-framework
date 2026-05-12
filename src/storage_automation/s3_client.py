@@ -1,3 +1,5 @@
+from io import BytesIO
+
 import boto3
 from src.storage_automation.interfaces.s3 import S3
 from botocore.client import Config
@@ -77,12 +79,12 @@ class S3Client(S3):
             logger.error(f"Object metadata retrieval failed: {error}")
             return {"message": "Object metadata retrieval failed"}
 
-    def get_object_size(self, bucket_name: str, object_key: str) -> dict:
+    def get_object_size(self, bucket_name: str, object_key: str) -> int:
         try:
             return self.s3_client.head_object(Bucket=bucket_name, Key=object_key)["ContentLength"]
         except ClientError as error:
             logger.error(f"Object size retrieval failed: {error}")
-            return {"message": "Object size retrieval failed"}
+            return -1
 
     def write_object(self, bucket_name: str, object_key: str, content: bytes) -> dict:
         self.ensure_bucket_exists(bucket_name)
@@ -93,7 +95,7 @@ class S3Client(S3):
             logger.error(f"Object writing failed: {error}")
             return {"message": "Object writing failed"}
 
-    def read_object(self, bucket_name: str, object_key: str) -> dict:
+    def read_object(self, bucket_name: str, object_key: str) -> bytes | dict:
         try:
             return self.s3_client.get_object(Bucket=bucket_name, Key=object_key)["Body"].read()
         except ClientError as error:
@@ -128,7 +130,11 @@ class S3Client(S3):
             logger.error(f"Object download failed: {error}")
             return {"message": "Object download failed"}
 
-    def upload_file(self, object_key: str, content: bytes, content_type: str) -> dict:
+    def upload_bytes(self, object_key: str, content: bytes, content_type: str) -> dict:
+        """
+        Upload in-memory bytes to the configured default bucket (put_object).
+        Typical use: FastAPI after await upload_file.read().
+        """
         self.ensure_bucket_exists(self.bucket_name)
         try:
             self.s3_client.put_object(
@@ -147,12 +153,15 @@ class S3Client(S3):
             logger.error(f"Object upload failed: {error}")
             return {"message": "Object upload failed"}
 
-    def download_file(self, object_key: str) -> tuple[BytesIO, str]:
+    def download_file(self, object_key: str) -> tuple[BytesIO, str] | dict:
+        """
+        Return object body as BytesIO and Content-Type (default bucket).
+        """
         try:
             response = self.s3_client.get_object(
                 Bucket=self.bucket_name,
                 Key=object_key,
-        )
+            )
             body = response["Body"].read()
             content_type = response.get("ContentType", "application/octet-stream")
             return BytesIO(body), content_type

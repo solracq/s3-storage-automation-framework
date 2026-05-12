@@ -8,7 +8,7 @@ class S3(ABC):
         pass
 
     @abstractmethod
-    def ensure_bucket_exists(self, bucket_name:str) -> None:
+    def ensure_bucket_exists(self, bucket_name: str) -> None:
         pass
 
     @abstractmethod
@@ -24,7 +24,7 @@ class S3(ABC):
         pass
 
     @abstractmethod
-    def list_objects(self, bucket_name: str) -> dict:
+    def list_objects(self, bucket_name: str) -> list[dict]:
         pass
 
     @abstractmethod
@@ -32,7 +32,7 @@ class S3(ABC):
         pass
 
     @abstractmethod
-    def get_object_size(self, bucket_name: str, object_key: str) -> dict:
+    def get_object_size(self, bucket_name: str, object_key: str) -> int:
         pass
 
     @abstractmethod
@@ -40,7 +40,7 @@ class S3(ABC):
         pass
 
     @abstractmethod
-    def read_object(self, bucket_name: str, object_key: str) -> dict:
+    def read_object(self, bucket_name: str, object_key: str) -> bytes | dict:
         pass
     
     @abstractmethod
