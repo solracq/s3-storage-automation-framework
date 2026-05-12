@@ -21,16 +21,15 @@ class S3Client(S3):
         )
 
     @property
-    def access_type(self):
+    def get_access_type(self) -> str:
         return "S3 Client"
 
-    def bucket_exists(self, bucket_name: str) -> bool:
+    def ensure_bucket_exists(self, bucket_name: str) -> None:
         try:
             self.s3_client.head_bucket(Bucket=bucket_name)
-            return True
-        except ClientError as error:
-            logger.error(f"Bucket does not exist: {bucket_name}")
-            return False
+        except ClientError:
+            logger.warning(f"Bucket does not exist: {bucket_name}. Creating bucket...")
+            self.create_bucket(bucket_name)
 
     def create_bucket(self, bucket_name: str) -> dict:
         try:
@@ -94,7 +93,10 @@ class S3Client(S3):
     def delete_object(self, bucket_name: str, object_key: str) -> dict:
         try:
             self.s3_client.delete_object(Bucket=bucket_name, Key=object_key)
-            return {"message": "Object deleted successfully"}
+            return {"message": "Object deleted successfully",
+                    "bucket_name": bucket_name,
+                    "object_key": object_key,
+                    }
         except ClientError as error:
             logger.error(f"Object deletion failed: {error}")
             return {"message": "Object deletion failed"}

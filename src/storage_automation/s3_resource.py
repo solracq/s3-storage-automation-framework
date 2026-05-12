@@ -21,16 +21,15 @@ class S3Resource(S3):
         self.bucket = self.s3_resource.Bucket(self.bucket_name) # handle bucket for resurce-style calls.
 
     @property
-    def access_type(self):
+    def get_access_type(self) -> str:
         return "S3 Resource"
 
-    def bucket_exist(self, bucket_name: str) -> bool:
+    def ensure_bucket_exists(self, bucket_name: str) -> None:
         try:
             self.s3_resource.Bucket(bucket_name).exists()
-            return True
-        except ClientError as error:
-            logger.error(f"Bucket does not exist: {bucket_name}")
-            return False
+        except ClientError:
+            logger.warning(f"Bucket does not exist: {bucket_name}. Creating bucket...")
+            self.create_bucket(bucket_name)
 
     def create_bucket(self, bucket_name: str) -> dict:
         try:
