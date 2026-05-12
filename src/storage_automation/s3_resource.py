@@ -33,7 +33,7 @@ class S3Resource(S3):
 
     def create_bucket(self, bucket_name: str) -> dict:
         try:
-            self.s3_resource.create_bucket(Bucket=self.bucket)
+            self.s3_resource.create_bucket(Bucket=bucket_name)
             return {"message": "Bucket created successfully"}
         except ClientError as error:
             logger.error(f"Bucket creation failed: {error}")
@@ -41,7 +41,8 @@ class S3Resource(S3):
 
     def delete_bucket(self, bucket_name: str) -> dict:
         try:
-            self.s3_resource.delete_bucket(Bucket=self.bucket)
+            self.s3_resource.Bucket(bucket_name).empty()
+            self.s3_resource.Bucket(bucket_name).delete()
             return {"message": "Bucket deleted successfully"}
         except ClientError as error:
             logger.error(f"Bucket deletion failed: {error}")
@@ -54,13 +55,11 @@ class S3Resource(S3):
             logger.error(f"Bucket listing failed: {error}")
             return {"message": "Bucket listing failed"}
 
-    def list_objects(self, bucket_name: str) -> dict:
+    def list_objects(self, bucket_name: str) -> list[dict]:
         try:
             return self.bucket.objects.all()
-            return {"message": "Objects listed successfully"}
         except ClientError as error:
             logger.error(f"Objects listing failed: {error}")
-            return {"message": "Objects listing failed"}   
 
     def get_object_metadata(self, bucket_name: str, object_key: str) -> dict:
         try:
@@ -69,12 +68,12 @@ class S3Resource(S3):
             logger.error(f"Object metadata retrieval failed: {error}")
             return {"message": "Object metadata retrieval failed"}
 
-    def get_object_size(self, bucket_name: str, object_key: str) -> dict:
+    def get_object_size(self, bucket_name: str, object_key: str) -> int:
         try:
             return self.bucket.objects.filter(Prefix=object_key).first().size
         except ClientError as error:
             logger.error(f"Object size retrieval failed: {error}")
-            return {"message": "Object size retrieval failed"}
+            return -1
 
     def write_object(self, bucket_name: str, object_key: str, content: bytes) -> dict:
         try:
@@ -84,7 +83,7 @@ class S3Resource(S3):
             logger.error(f"Object writing failed: {error}")
             return {"message": "Object writing failed"}
 
-    def read_object(self, bucket_name: str, object_key: str) -> dict:
+    def read_object(self, bucket_name: str, object_key: str) -> bytes | dict:
         try:
             return self.bucket.objects.filter(Prefix=object_key).first().read()
         except ClientError as error:
