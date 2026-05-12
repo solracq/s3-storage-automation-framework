@@ -54,12 +54,21 @@ class S3Client(S3):
             logger.error(f"Bucket listing failed: {error}")
             return {"message": "Bucket listing failed"}
 
-    def list_objects(self, bucket_name: str) -> dict:
+    def list_objects(self, bucket_name: str) -> list[dict]:
         try:
-            return self.s3_client.list_objects(Bucket=bucket_name)
+            response = self.s3_client.list_objects_v2(Bucket=bucket_name)
+            objects = response.get("Contents", [])
+            return [
+                {
+                    "key": item["Key"],
+                    "size": item["Size"],
+                    "last_modified": item["LastModified"].isoformat(),
+                }
+            for item in objects
+            ]
         except ClientError as error:
             logger.error(f"Objects listing failed: {error}")
-            return {"message": "Objects listing failed"}
+            return []
 
     def get_object_metadata(self, bucket_name: str, object_key: str) -> dict:
         try:
@@ -76,6 +85,7 @@ class S3Client(S3):
             return {"message": "Object size retrieval failed"}
 
     def write_object(self, bucket_name: str, object_key: str, content: bytes) -> dict:
+        self.ensure_bucket_exists(bucket_name)
         try:
             self.s3_client.put_object(Bucket=bucket_name, Key=object_key, Body=content)
             return {"message": "Object written successfully"}
@@ -102,6 +112,7 @@ class S3Client(S3):
             return {"message": "Object deletion failed"}
 
     def upload_object(self, bucket_name: str, object_key: str, file_path: str) -> dict:
+        self.ensure_bucket_exists(bucket_name)
         try:
             self.s3_client.upload_file(file_path, bucket_name, object_key)
             return {"message": "Object uploaded successfully"}
@@ -113,6 +124,38 @@ class S3Client(S3):
         try:
             self.s3_client.download_file(bucket_name, object_key, file_path)
             return {"message": "Object downloaded successfully"}
+        except ClientError as error:
+            logger.error(f"Object download failed: {error}")
+            return {"message": "Object download failed"}
+
+    def upload_file(self, object_key: str, content: bytes, content_type: str) -> dict:
+        self.ensure_bucket_exists(self.bucket_name)
+        try:
+            self.s3_client.put_object(
+                Bucket=self.bucket_name,
+                Key=object_key,
+                Body=content,
+                ContentType=content_type,
+            )
+            return {
+                "bucket": self.bucket_name,
+                "object_key": object_key,
+                "content_type": content_type,
+                "message": "Object uploaded successfully",
+            }
+        except ClientError as error:
+            logger.error(f"Object upload failed: {error}")
+            return {"message": "Object upload failed"}
+
+    def download_file(self, object_key: str) -> tuple[BytesIO, str]:
+        try:
+            response = self.s3_client.get_object(
+                Bucket=self.bucket_name,
+                Key=object_key,
+        )
+            body = response["Body"].read()
+            content_type = response.get("ContentType", "application/octet-stream")
+            return BytesIO(body), content_type
         except ClientError as error:
             logger.error(f"Object download failed: {error}")
             return {"message": "Object download failed"}
