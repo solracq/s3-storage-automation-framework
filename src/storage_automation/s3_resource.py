@@ -26,27 +26,53 @@ class S3Resource(S3):
 
     def ensure_bucket_exists(self, bucket_name: str) -> None:
         try:
-            if not self.s3_resource.Bucket(bucket_name).exists():
-                logger.warning(f"Bucket does not exist: {bucket_name}. Creating bucket...")
-                self.create_bucket(bucket_name)
-        except ClientError:
-            logger.error(f"Problem checking whether {bucket_name} bucket exists.")
-            raise
+            self.s3_resource.meta.client.head_bucket(Bucket=bucket_name)
+        except ClientError as error:
+            error_code = error.response.get("Error", {}).get("Code", "")
+
+            if error_code not in {"404", "NoSuchBucket", "NotFound"}:
+                logger.error(f"Problem checking whether {bucket_name} bucket exists: {error}")
+                raise
+
+            logger.warning(f"Bucket does not exist: {bucket_name}. Creating bucket...")
+            result = self.create_bucket(bucket_name)
+
+            if result.get("message") != "Bucket created successfully":
+                raise RuntimeError(result.get("error") or f"Failed to create bucket: {bucket_name}")
 
     def create_bucket(self, bucket_name: str) -> dict:
         try:
-            self.s3_resource.create_bucket(Bucket=bucket_name)
+            create_bucket_args = {"Bucket": bucket_name}
+
+            if Settings.aws_region and Settings.aws_region != "us-east-1":
+                create_bucket_args["CreateBucketConfiguration"] = {
+                    "LocationConstraint": Settings.aws_region
+                }
+
+            self.s3_resource.create_bucket(**create_bucket_args)
             return {"message": "Bucket created successfully"}
         except ClientError as error:
             logger.error(f"Bucket creation failed: {error}")
-            return {"message": "Bucket creation failed"}
+            return {
+                "message": "Bucket creation failed",
+                "bucket_name": bucket_name,
+                "error": str(error),
+            }
 
     def delete_bucket(self, bucket_name: str) -> dict:
         try:
-            logger.info(f"Emptying bucket before deletion.")
-            self.s3_resource.Bucket(bucket_name).empty()
-            logger.info(f"Bucket is empty, let's delete it.")
-            self.s3_resource.Bucket(bucket_name).delete()
+            bucket = self.s3_resource.Bucket(bucket_name)
+            versioning_status = self.s3_resource.BucketVersioning(bucket_name).status
+
+            logger.info("Emptying bucket before deletion.")
+            if versioning_status in {"Enabled", "Suspended"}:
+                bucket.object_versions.delete()
+            else:
+                bucket.objects.all().delete() # Clearing the bucket before deletion for resource calls.
+
+            logger.info("Bucket is empty, let's delete it.")
+            bucket.delete()
+
             return {"message": "Bucket deleted successfully"}
         except ClientError as error:
             logger.error(f"Bucket deletion failed: {error}")
@@ -89,11 +115,11 @@ class S3Resource(S3):
             return -1
 
     def write_object(self, bucket_name: str, object_key: str, content: bytes) -> dict:
-        self.ensure_bucket_exists(bucket_name)
         try:
+            self.ensure_bucket_exists(bucket_name)
             self.s3_resource.Object(bucket_name, object_key).put(Body=content)
             return {"message": "Object written successfully"}
-        except ClientError as error:
+        except (ClientError, RuntimeError) as error:
             logger.error(f"Object writing failed: {error}")
             return {"message": "Object writing failed"}
 
@@ -116,14 +142,11 @@ class S3Resource(S3):
             return {"message": "Object deletion failed"}
 
     def upload_object(self, bucket_name: str, object_key: str, file_path: str) -> dict:
-        self.ensure_bucket_exists(bucket_name)
         try:
+            self.ensure_bucket_exists(bucket_name)
             self.s3_resource.Bucket(bucket_name).upload_file(file_path, object_key)
             return {"message": "Object uploaded successfully"}
-        except ClientError as error:
-            logger.error(f"Object upload failed: {error}")
-            return {"message": "Object upload failed"}
-        except OSError as error:
+        except (ClientError, RuntimeError, OSError) as error:
             logger.error(f"Object upload failed: {error}")
             return {"message": "Object upload failed"}
 
@@ -131,9 +154,7 @@ class S3Resource(S3):
         try:
             self.s3_resource.Bucket(bucket_name).download_file(object_key, file_path)
             return {"message": "Object downloaded successfully"}
-        except ClientError as error:
+        except (ClientError, OSError) as error:
             logger.error(f"Object download failed: {error}")
             return {"message": "Object download failed"}
-        except OSError as error:
-            logger.error(f"Object download failed: {error}")
-            return {"message": "Object download failed"}
+
