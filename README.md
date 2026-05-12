@@ -33,9 +33,11 @@ s3_storage_automation/
 │   ├── __init__.py
 │   ├── storage_automation/
 │   │   ├── __init__.py
-│   │   ├── s3.py
-│   │   ├── client.py
-│   │   └── resource.py
+│   │   ├── interfaces/
+│   │   │   ├── __init__.py
+│   │   │   └── s3.py
+│   │   ├── s3_client.py
+│   │   └── s3_resource.py
 │   └── utils/
 │       ├── __init__.py
 │       └── helpers.py
