@@ -4,11 +4,11 @@ class S3(ABC):
 
     @property
     @abstractmethod
-    def access_type(self):
+    def get_access_type(self) -> str:
         pass
 
     @abstractmethod
-    def bucket_exists(self, bucket_name:str) -> bool:
+    def ensure_bucket_exists(self, bucket_name:str) -> None:
         pass
 
     @abstractmethod
