@@ -83,7 +83,12 @@ docker ps
 | MinIO Web Console |   http://localhost:9001    |
 ```
 
-4. Teardown services. The command below stops containers and delete MinIO sotored data
+4. Teardown services. The command below stops containers and delete 
+Stop containers but keep MinIO data:
+```text
+   docker-compose down
+```
+Stop containers and delete MinIO stored data:
 ```text
    docker-compose down -v
 ```
@@ -115,3 +120,4 @@ Result:
 ```text
 {"bucket":"test-bucket","objects":[]}
 ```
+Note: For a more complete manual validation, tests are located at ../
