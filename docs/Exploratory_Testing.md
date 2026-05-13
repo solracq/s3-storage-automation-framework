@@ -102,7 +102,7 @@ curl http://localhost:8000/files/sample.txt -o downloaded-sample.txt
 ```
 
 **Expected**
-File downladed with "downlaoded-" prefix
+File is downloaded successfully and its content matches the uploaded file
 
 **Output**
 ```text
@@ -151,7 +151,7 @@ Bucket created successfully
 
 **Output**
 ```text
-INFO:   ip_address:port - "POST /buckets?bucket_name=test-bucket2 HTTP/1.1" 200 OK
+INFO:   <client-ip>:<port>  - "POST /buckets?bucket_name=test-bucket2 HTTP/1.1" 200 OK
 {"message":"Bucket created successfully"}
 ```
 
@@ -168,11 +168,11 @@ curl "http://localhost:8000/buckets"
 
 **Output**
 ```text
-INFO:   ip_address:port - "GET /buckets HTTP/1.1" 200 OK
+INFO:   <client-ip>:<port> - "GET /buckets HTTP/1.1" 200 OK
 {"ResponseMetadata":{"RequestId":"18AF29E9B45D9B90","HostId":"dd9025bab4ad464b049177c95eb6ebf374d3b3fd1af9251148b658df7ac2e3e8","HTTPStatusCode":200,"HTTPHeaders":{"accept-ranges":"bytes","content-length":"464","content-type":"application/xml","server":"MinIO","strict-transport-security":"max-age=31536000; includeSubDomains","vary":"Origin, Accept-Encoding","x-amz-id-2":"dd9025bab4ad464b049177c95eb6ebf374d3b3fd1af9251148b658df7ac2e3e8","x-amz-request-id":"18AF29E9B45D9B90","x-content-type-options":"nosniff","x-ratelimit-limit":"4278","x-ratelimit-remaining":"4278","x-xss-protection":"1; mode=block","date":"Wed, 13 May 2026 15:34:21 GMT"},"RetryAttempts":0},"Buckets":[{"Name":"test-bucket","CreationDate":"2026-05-13T01:07:36.480000+00:00"},{"Name":"test-bucket2","CreationDate":"2026-05-13T15:32:17.234000+00:00"}],"Owner":{"DisplayName":"minio","ID":"02d6176db174dc93cb1b899f7c6078f08654445fe8cf1b6ce98d8855f66bdbf4"}}
 ```
 
-#### Scenario 6: Delete an emtpy bucket
+#### Scenario 6: Delete an empty bucket
 ```text
 curl -X DELETE "http://localhost:8000/buckets/test-bucket2"
 ```
@@ -182,7 +182,7 @@ Bucket deleted successfully
 
 **Output**
 ```text
-INFO:   ip_address:port - "DELETE /buckets/test-bucket2 HTTP/1.1" 200 OK
+INFO:   <client-ip>:<port> - "DELETE /buckets/test-bucket2 HTTP/1.1" 200 OK
 {"message":"Bucket deleted successfully"}
 ```
 
@@ -205,16 +205,16 @@ Bucket deleted successfully
 
 **Output**
 ```text
-INFO:   ip_address:port - "DELETE /buckets/test-bucket2 HTTP/1.1" 200 OK
+INFO:   <client-ip>:<port> - "DELETE /buckets/test-bucket2 HTTP/1.1" 200 OK
 
 {"message":"Object deleted successfully","bucket_name":"test-bucket","object_key":"sample.txt"}
 
 {"message":"Bucket deleted successfully"}
 ```
 
-#### Scenario 7: Get Object Metadata
+#### Scenario 8: Get Object Metadata
 **Pre-conditions**
-A bucket exists with an object sotred
+A bucket exists with an object stored
 
 ```text
 curl "http://localhost:8000/objects/sample.txt/metadata?bucket_name=test-bucket"
@@ -233,12 +233,12 @@ curl "http://localhost:8000/objects/sample.txt/metadata?bucket_name=test-bucket"
 
 **Output**
 ```text
-INFO:   ip_address:port - "GET /objects/sample.txt/metadata?bucket_name=test-bucket HTTP/1.1" 200 O
+INFO:   <client-ip>:<port> - "GET /objects/sample.txt/metadata?bucket_name=test-bucket HTTP/1.1" 200 O
 
 {"ResponseMetadata":{"RequestId":"18AF2B7065A201D4","HostId":"dd9025bab4ad464b049177c95eb6ebf374d3b3fd1af9251148b658df7ac2e3e8","HTTPStatusCode":200,"HTTPHeaders":{"accept-ranges":"bytes","content-length":"47","content-type":"text/plain","etag":"\"ce52118d5f6333dbb5d7ebd0a1fc6893\"","last-modified":"Wed, 13 May 2026 16:01:30 GMT","server":"MinIO","strict-transport-security":"max-age=31536000; includeSubDomains","vary":"Origin, Accept-Encoding","x-amz-id-2":"dd9025bab4ad464b049177c95eb6ebf374d3b3fd1af9251148b658df7ac2e3e8","x-amz-request-id":"18AF2B7065A201D4","x-content-type-options":"nosniff","x-ratelimit-limit":"4278","x-ratelimit-remaining":"4278","x-xss-protection":"1; mode=block","date":"Wed, 13 May 2026 16:02:19 GMT"},"RetryAttempts":0},"AcceptRanges":"bytes","LastModified":"2026-05-13T16:01:30+00:00","ContentLength":47,"ETag":"\"ce52118d5f6333dbb5d7ebd0a1fc6893\"","ContentType":"text/plain","Metadata":{}}
 ```
 
-#### Scenario 8: Get Object Size
+#### Scenario 9: Get Object Size
 **Pre-conditions**
 A bucket exists with one object/file
 
@@ -251,15 +251,15 @@ bucket object size is shown
 
 **Output**
 ```text
-INFO:   ip-address:port - "GET /objects/sample.txt/size?bucket_name=test-bucket HTTP/1.1" 200 OK
+INFO:   <client-ip>:<port> - "GET /objects/sample.txt/size?bucket_name=test-bucket HTTP/1.1" 200 OK
 {"bucket_name":"test-bucket","object_key":"sample.txt","size":47}
 ```
 
-#### Scenario 9: Write Object
+#### Scenario 10: Write Object
 **Pre-conditions**
 A bucket exists with one object/file
 
-**1. Write Content form local file**
+**1. Write content from local file**
 ```text
 curl -X PUT "http://localhost:8000/objects/sample.txt?bucket_name=test-bucket" --data-binary @sample.txt
 ```
@@ -272,7 +272,7 @@ curl -X PUT \
   --data-binary 'Hello from the write_object endpoint'
 ```
 
-**3. Write Content form local file**
+**3. Write multiple lines directly**
 ```text
 curl -X PUT \
   "http://localhost:8000/objects/sample.txt?bucket_name=test-bucket" \
@@ -280,16 +280,16 @@ curl -X PUT \
 ```
 
 **Expected**
-Data gets added to the specified object in bucket
+Object content is overwritten with the provided request body
 
 **Output**
 ```text
-INFO:   ip-address:port - "PUT /objects/sample.txt?bucket_name=test-bucket HTTP/1.1" 200 OK
+INFO:   <client-ip>:<port> - "PUT /objects/sample.txt?bucket_name=test-bucket HTTP/1.1" 200 OK
 
 {"message":"Object written successfully"}
 ```
 
-#### Scenario 10: Read Object
+#### Scenario 11: Read Object
 **Pre-conditions**
 A bucket exists with one object/file with data
 
@@ -302,13 +302,13 @@ Data stored in object is displayed
 
 **Output**
 ```text
-INFO:   ip-address:port - "GET /objects/sample.txt?bucket_name=test-bucket HTTP/1.1" 200 OK
+INFO:   <client-ip>:<port> - "GET /objects/sample.txt?bucket_name=test-bucket HTTP/1.1" 200 OK
 
 Hello from the write_object endpoint
 ```
 
 ### Negative Scenarios
-#### Scenario 11: Create a bucket with an exiting bucket name
+#### Scenario 12: Create a bucket with an existing bucket name
 **Pre-conditions:**
 - An existing bucket exist with the name "test-bucket"
 
@@ -322,13 +322,13 @@ Bucket creation failed... Your previous request to create the named bucket succe
 
 **Output**
 ```text
-INFO:   ip-address:port - "POST /buckets?bucket_name=test-bucket HTTP/1.1" 200 OK
+INFO:   <client-ip>:<port> - "POST /buckets?bucket_name=test-bucket HTTP/1.1" 200 OK
 Bucket creation failed: An error occurred (BucketAlreadyOwnedByYou) when calling the CreateBucket operation: Your previous request to create the named bucket succeeded and you already own it.
 
 {"message":"Bucket creation failed","bucket_name":"test-bucket","error":"An error occurred (BucketAlreadyOwnedByYou) when calling the CreateBucket operation: Your previous request to create the named bucket succeeded and you already own it."}
 ```
 
-#### Scenario 12: List an empty list of buckets
+#### Scenario 13: List an empty list of buckets
 **Pre-conditions:**
 - No buckets available in the storage server
 
@@ -342,12 +342,12 @@ curl "http://localhost:8000/buckets"
 
 **Output**
 ```text
-INFO:  ip-address:port - "GET /buckets HTTP/1.1" 200 OK
+INFO:  <client-ip>:<port>  - "GET /buckets HTTP/1.1" 200 OK
 
 {"ResponseMetadata":{"RequestId":"18AF2A6A41897D60","HostId":"dd9025bab4ad464b049177c95eb6ebf374d3b3fd1af9251148b658df7ac2e3e8","HTTPStatusCode":200,"HTTPHeaders":{"accept-ranges":"bytes","content-length":"275","content-type":"application/xml","server":"MinIO","strict-transport-security":"max-age=31536000; includeSubDomains","vary":"Origin, Accept-Encoding","x-amz-id-2":"dd9025bab4ad464b049177c95eb6ebf374d3b3fd1af9251148b658df7ac2e3e8","x-amz-request-id":"18AF2A6A41897D60","x-content-type-options":"nosniff","x-ratelimit-limit":"4278","x-ratelimit-remaining":"4278","x-xss-protection":"1; mode=block","date":"Wed, 13 May 2026 15:43:33 GMT"},"RetryAttempts":0},"Buckets":[],"Owner":{"DisplayName":"minio","ID":"02d6176db174dc93cb1b899f7c6078f08654445fe8cf1b6ce98d8855f66bdbf4"}}
 ```
 
-#### Scenario 13: Delete an already deleted bucket
+#### Scenario 14: Delete an already deleted bucket
 **Pre-conditions:**
 - "test-bucket2" has been previously deleted
 
@@ -361,13 +361,13 @@ Bucket deletion failed
 
 **Output**
 ```text
-INFO:   ip-address:port - "DELETE /buckets/test-bucket2 HTTP/1.1" 200 OK
+INFO:   <client-ip>:<port> - "DELETE /buckets/test-bucket2 HTTP/1.1" 200 OK
 Bucket deletion failed: test-bucket2
 
 {"message":"Bucket deletion failed"}
 ```
 
-#### Scenario 14: Delete a bucket with objects in it
+#### Scenario 15: Delete a bucket with objects in it
 **Pre-conditions:**
 - bucket contains one or more objects
 
@@ -381,11 +381,11 @@ Bucket deletion failed
 
 **Output**
 ```text
-INFO:   ip-address:port - "DELETE /buckets/test-bucket HTTP/1.1" 200 OK
+INFO:   <client-ip>:<port> - "DELETE /buckets/test-bucket HTTP/1.1" 200 OK
 {"message":"Bucket deletion failed"}
 ```
 
-#### Scenario 15: Hitting beyond the load-file limit for a bucket
+#### Scenario 16: Upload a file that exceeds the multipart size limit
 **Description**
 Implementation multipart parser defaults to max_part_size = 1024 * 1024 (1 MB)
 
@@ -404,12 +404,12 @@ User shouldn't be able to upload a large file that exceeds the limit.
 
 **Output**
 ```text
-INFO:    ip-address:port - "POST /files/large-sample.txt HTTP/1.1" 400 Bad Request
+INFO:    <client-ip>:<port> - "POST /files/large-sample.txt HTTP/1.1" 400 Bad Request
 
 {"detail":"There was an error parsing the body"}
 ```
 
-#### Scenario 16: Upload an empty file to a bucket
+#### Scenario 17: Upload an empty file to a bucket
 **Pre-conditions:**
 - An existing bucket exist with the name "test-bucket"
 
@@ -425,14 +425,14 @@ File content cannot be empty
 
 **Output**
 ```text
-INFO:   ip-address:port - "POST /files/empty-sample.txt HTTP/1.1" 400 Bad Request
+INFO:   <client-ip>:<port> - "POST /files/empty-sample.txt HTTP/1.1" 400 Bad Request
 
 {"detail":"File content cannot be empty"}
 ```
 
 ### Edge Scenarios
 
-#### Scenario 17: Upload a large file within the limit to a bucket
+#### Scenario 18: Upload a large file within the limit to a bucket
 **Description**
 Implementation multipart parser defaults to max_part_size = 1024 * 1024 (1 MB)
 
@@ -451,7 +451,7 @@ Object uploaded successfully
 
 **Output**
 ```text
-INFO:    ip-address:port - "POST /files/large-sample.txt HTTP/1.1" 200 OK
+INFO:    <client-ip>:<port> - "POST /files/large-sample.txt HTTP/1.1" 200 OK
 
 {"message":"Object uploaded successfully","bucket":"test-bucket","object_key":"large-sample.txt","content_type":"text/plain"}
 ```
