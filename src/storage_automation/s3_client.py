@@ -29,17 +29,37 @@ class S3Client(S3):
     def ensure_bucket_exists(self, bucket_name: str) -> None:
         try:
             self.s3_client.head_bucket(Bucket=bucket_name)
-        except ClientError:
+        except ClientError as error:
+            error_code = error.response.get("Error", {}).get("Code", "")
+
+            if error_code not in {"404", "NoSuchBucket", "NotFound"}:
+                logger.error(f"Problem checking whether {bucket_name} bucket exists: {error}")
+                raise
+
             logger.warning(f"Bucket does not exist: {bucket_name}. Creating bucket...")
-            self.create_bucket(bucket_name)
+            result = self.create_bucket(bucket_name)
+
+            if result.get("message") != "Bucket created successfully":
+                raise RuntimeError(result.get("error") or f"Failed to create bucket: {bucket_name}")
 
     def create_bucket(self, bucket_name: str) -> dict:
         try:
-            self.s3_client.create_bucket(Bucket=bucket_name)
+            create_bucket_args = {"Bucket": bucket_name}
+
+            if Settings.aws_region and Settings.aws_region != "us-east-1":
+                create_bucket_args["CreateBucketConfiguration"] = {
+                    "LocationConstraint": Settings.aws_region
+                }
+
+            self.s3_client.create_bucket(**create_bucket_args)
             return {"message": "Bucket created successfully"}
         except ClientError as error:
-            logger.error(f"Bucket already exists: {bucket_name}")
-            return {"message": "Bucket already exists"}
+            logger.error(f"Bucket creation failed: {error}")
+            return {
+                "message": "Bucket creation failed",
+                "bucket_name": bucket_name,
+                "error": str(error),
+            }
 
     def delete_bucket(self, bucket_name: str) -> dict:
         try:
@@ -87,11 +107,11 @@ class S3Client(S3):
             return -1
 
     def write_object(self, bucket_name: str, object_key: str, content: bytes) -> dict:
-        self.ensure_bucket_exists(bucket_name)
         try:
+            self.ensure_bucket_exists(bucket_name)
             self.s3_client.put_object(Bucket=bucket_name, Key=object_key, Body=content)
             return {"message": "Object written successfully"}
-        except ClientError as error:
+        except (ClientError, RuntimeError) as error:
             logger.error(f"Object writing failed: {error}")
             return {"message": "Object writing failed"}
 
@@ -114,11 +134,11 @@ class S3Client(S3):
             return {"message": "Object deletion failed"}
 
     def upload_object(self, bucket_name: str, object_key: str, file_path: str) -> dict:
-        self.ensure_bucket_exists(bucket_name)
         try:
+            self.ensure_bucket_exists(bucket_name)
             self.s3_client.upload_file(file_path, bucket_name, object_key)
             return {"message": "Object uploaded successfully"}
-        except ClientError as error:
+        except (ClientError, RuntimeError, OSError) as error:
             logger.error(f"Object upload failed: {error}")
             return {"message": "Object upload failed"}
 
@@ -126,7 +146,7 @@ class S3Client(S3):
         try:
             self.s3_client.download_file(bucket_name, object_key, file_path)
             return {"message": "Object downloaded successfully"}
-        except ClientError as error:
+        except (ClientError, OSError) as error:
             logger.error(f"Object download failed: {error}")
             return {"message": "Object download failed"}
 
@@ -135,8 +155,8 @@ class S3Client(S3):
         Upload in-memory bytes to the configured default bucket (put_object).
         Typical use: FastAPI after await upload_file.read().
         """
-        self.ensure_bucket_exists(self.bucket_name)
         try:
+            self.ensure_bucket_exists(self.bucket_name)
             self.s3_client.put_object(
                 Bucket=self.bucket_name,
                 Key=object_key,
@@ -149,11 +169,11 @@ class S3Client(S3):
                 "content_type": content_type,
                 "message": "Object uploaded successfully",
             }
-        except ClientError as error:
+        except (ClientError, RuntimeError) as error:
             logger.error(f"Object upload failed: {error}")
             return {"message": "Object upload failed"}
 
-    def download_file(self, object_key: str) -> tuple[BytesIO, str] | dict:
+    def download_file(self, object_key: str) -> tuple[BytesIO, str]:
         """
         Return object body as BytesIO and Content-Type (default bucket).
         """
@@ -167,4 +187,4 @@ class S3Client(S3):
             return BytesIO(body), content_type
         except ClientError as error:
             logger.error(f"Object download failed: {error}")
-            return {"message": "Object download failed"}
+            raise
