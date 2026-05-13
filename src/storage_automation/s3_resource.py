@@ -2,20 +2,20 @@ import boto3
 from botocore.client import Config
 from botocore.exceptions import ClientError
 from src.storage_automation.interfaces.s3 import S3
-from app.storage_api.settings import Settings
+from app.storage_api.settings import settings
 import logging
 
 logger = logging.getLogger(__name__)
 
 class S3Resource(S3):
     def __init__(self) -> None:
-        self.bucket_name = Settings.minio_bucket_name
+        self.bucket_name = settings.minio_bucket_name
         self.s3_resource = boto3.resource( # Same customization as the client so MinIO behaves the same for both.
             "s3",
-            endpoint_url=Settings.s3_endpoint_url,
-            aws_access_key_id=Settings.aws_access_key_id,
-            aws_secret_access_key=Settings.aws_secret_access_key,
-            region_name=Settings.aws_region,
+            endpoint_url=settings.s3_endpoint_url,
+            aws_access_key_id=settings.aws_access_key_id,
+            aws_secret_access_key=settings.aws_secret_access_key,
+            region_name=settings.aws_region,
             config=Config(signature_version="s3v4"),
         )
         self.bucket = self.s3_resource.Bucket(self.bucket_name) # handle bucket for resource-style calls.
@@ -44,9 +44,9 @@ class S3Resource(S3):
         try:
             create_bucket_args = {"Bucket": bucket_name}
 
-            if Settings.aws_region and Settings.aws_region != "us-east-1":
+            if settings.aws_region and settings.aws_region != "us-east-1":
                 create_bucket_args["CreateBucketConfiguration"] = {
-                    "LocationConstraint": Settings.aws_region
+                    "LocationConstraint": settings.aws_region
                 }
 
             self.s3_resource.create_bucket(**create_bucket_args)
@@ -157,4 +157,3 @@ class S3Resource(S3):
         except (ClientError, OSError) as error:
             logger.error(f"Object download failed: {error}")
             return {"message": "Object download failed"}
-
