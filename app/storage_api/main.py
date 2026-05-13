@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.responses import Response
 from botocore.exceptions import ClientError
 
@@ -30,6 +30,21 @@ async def bootstrap_bucket(bucket_name: str):
     }
 
 
+@app.post("/buckets")
+async def create_bucket(bucket_name: str):
+    return storage.create_bucket(bucket_name)
+
+
+@app.delete("/buckets/{bucket_name}")
+async def delete_bucket(bucket_name: str):
+    return storage.delete_bucket(bucket_name)
+
+
+@app.get("/buckets")
+async def list_buckets():
+    return storage.list_buckets()
+
+
 @app.post("/files/{object_key}")
 async def upload_file(object_key: str, file: UploadFile = File(...)):
     content = await file.read()
@@ -54,6 +69,57 @@ async def list_files(bucket_name: str):
         "bucket": storage.bucket_name,
         "objects": storage.list_objects(bucket_name),
     }
+
+
+@app.get("/objects/{object_key}/metadata")
+async def get_object_metadata(bucket_name: str, object_key: str):
+    return storage.get_object_metadata(bucket_name, object_key)
+
+
+@app.get("/objects/{object_key}/size")
+async def get_object_size(bucket_name: str, object_key: str):
+    size = storage.get_object_size(bucket_name, object_key)
+
+    if size == -1:
+        raise HTTPException(status_code=500, detail=f"Failed to get size for object: {object_key}")
+
+    return {
+        "bucket_name": bucket_name,
+        "object_key": object_key,
+        "size": size,
+    }
+
+
+@app.put("/objects/{object_key}")
+async def write_object(bucket_name: str, object_key: str, request: Request):
+    content = await request.body()
+
+    if not content:
+        raise HTTPException(status_code=400, detail="Request body cannot be empty")
+
+    return storage.write_object(bucket_name, object_key, content)
+
+
+@app.get("/objects/{object_key}")
+async def read_object(bucket_name: str, object_key: str):
+    result = storage.read_object(bucket_name, object_key)
+
+    if isinstance(result, dict):
+        raise HTTPException(
+            status_code=500,
+            detail=result.get("message", f"Failed to read object: {object_key}"),
+        )
+
+    metadata = storage.get_object_metadata(bucket_name, object_key)
+    content_type = metadata.get("ContentType", "application/octet-stream")
+
+    return Response(
+        content=result,
+        media_type=content_type,
+        headers={
+            "Content-Disposition": f'inline; filename="{object_key}"'
+        },
+    )
 
 
 @app.get("/files/{object_key}")

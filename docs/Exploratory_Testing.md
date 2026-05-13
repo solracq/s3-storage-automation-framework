@@ -68,3 +68,24 @@ portfolio-storage-api  | INFO: - "DELETE /files/sample.txt?bucket_name=test-buck
 
 {"message":"Object deleted successfully","bucket_name":"test-bucket","object_key":"sample.txt"}
 
+### Other Scenarios:
+List buckets:
+curl "http://localhost:8000/buckets"
+
+Create bucket:
+curl -X POST "http://localhost:8000/buckets?bucket_name=test-bucket"
+
+Delete bucket:
+curl -X DELETE "http://localhost:8000/buckets/test-bucket"
+
+Get Object Metadata:
+curl "http://localhost:8000/objects/sample.txt/metadata?bucket_name=test-bucket"
+
+Get Object Size:
+curl "http://localhost:8000/objects/sample.txt/size?bucket_name=test-bucket"
+
+Write Object:
+curl -X PUT "http://localhost:8000/objects/sample.txt?bucket_name=test-bucket" --data-binary @sample.txt
+
+Read Oject:
+curl "http://localhost:8000/objects/sample.txt?bucket_name=test-bucket"
