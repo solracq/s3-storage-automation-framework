@@ -505,7 +505,25 @@ Bucket deletion failed: test-bucket2
 {"message":"Bucket deletion failed"}
 ```
 
-#### Scenario 19: Delete a bucket with objects in it
+##### Scenario 19: Delete an already deleted object in bucket
+**Pre-conditions:**
+- Bucket exists with no object
+
+```text
+curl -X DELETE "http://localhost:8000/files/sample.txt?bucket_name=test-bucket"
+```
+
+**Expected**
+API treats deletion of missing object as success. S3 deletes are idempotent.
+
+**Output**
+```text
+INFO:   <client-ip>:<port> - "DELETE /files/sample.txt?bucket_name=test-bucket HTTP/1.1" 200 OK
+
+{"message":"Object deleted successfully","bucket_name":"test-bucket","object_key":"sample.txt"}
+```
+
+#### Scenario 20: Delete a bucket with objects in it
 **Pre-conditions:**
 - bucket contains one or more objects
 
@@ -523,7 +541,7 @@ INFO:   <client-ip>:<port> - "DELETE /buckets/test-bucket HTTP/1.1" 200 OK
 {"message":"Bucket deletion failed"}
 ```
 
-#### Scenario 20: Upload a file that exceeds the multipart size limit
+#### Scenario 21: Upload a file that exceeds the multipart size limit
 **Description**
 Implementation multipart parser defaults to max_part_size = 1024 * 1024 (1 MB)
 
@@ -547,7 +565,7 @@ INFO:    <client-ip>:<port> - "POST /files/large-sample.txt HTTP/1.1" 400 Bad Re
 {"detail":"There was an error parsing the body"}
 ```
 
-#### Scenario 21: Upload an empty file to a bucket
+#### Scenario 22: Upload an empty file to a bucket
 **Pre-conditions:**
 - An existing bucket exist with the name "test-bucket"
 
@@ -568,9 +586,106 @@ INFO:   <client-ip>:<port> - "POST /files/empty-sample.txt HTTP/1.1" 400 Bad Req
 {"detail":"File content cannot be empty"}
 ```
 
+##### Scenario 23: Call any endpoint that require `bucket_name` without the query param
+** Pre-conditions
+- A bucket exists with an object
+
+**1. List bucket objects without providing `bucket_name` parameter
+```text
+curl "http://localhost:8000/files"
+```
+
+**Expected**
+422 Unprocessable Entity returned
+Field required message
+
+**Output**
+```text
+INFO:   <client-ip>:<port> - "GET /files HTTP/1.1" 422 Unprocessable Entity
+
+{"detail":[{"type":"missing","loc":["query","bucket_name"],"msg":"Field required","input":null}]}
+```
+
+##### Scenario 24: Send an upload request without the multipart file field
+```text
+curl -X POST http://localhost:8000/files/sample.txt
+```
+
+**Expected**
+422 Unprocessable Entity returned
+Field required message
+
+**Output**
+```text
+INFO:   <client-ip>:<port> - "POST /files/sample.txt HTTP/1.1" 422 Unprocessable Entity
+
+{"detail":[{"type":"missing","loc":["body","file"],"msg":"Field required","input":null}]}
+```
+
+##### Scenario 25: Download object for a missing object in bucket
+- A bucket exists with no objects stored in it
+
+**Download the file**
+```text
+curl http://localhost:8000/files/sample.txt -o downloaded-sample.txt
+```
+
+**Expected**
+404 Not Found
+
+**Output**
+```text
+INFO:   <client-ip>:<port> - "GET /files/sample.txt HTTP/1.1" 404 Not Found
+Object download failed: An error occurred (NoSuchKey) when calling the GetObject operation: The specified key does not exist.
+
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100    41  100    41    0     0   3026      0 --:--:-- --:--:-- --:--:--  3153
+```
+
+#### Scenario 26: Create bucket with invalid name
+```text
+curl -X POST "http://localhost:8000/buckets?bucket_name=TEST-b@ck3t"
+```
+
+**Expected**
+Parameter validation failed
+Bucket with invalid name cannot be created
+
+**Output**
+```text
+botocore.exceptions.ParamValidationError: Parameter validation failed:
+portfolio-storage-api  | Invalid bucket name "TEST-b@ck3t": Bucket name must match the regex "^[a-zA-Z0-9.\-_]{1,255}$" or be an ARN matching the regex "^arn:(aws).*:(s3|s3-object-lambda):[a-z\-0-9]*:[0-9]{12}:accesspoint[/:][a-zA-Z0-9\-.]{1,63}$|^arn:(aws).*:s3-outposts:[a-z\-0-9]+:[0-9]{12}:outpost[/:][a-zA-Z0-9\-]{1,63}[/:]accesspoint[/:][a-zA-Z0-9\-]{1,63}$"
+
+Internal Server Error
+```
+
+#### Scenario 27: Write Object with empty data
+**Pre-conditions**
+A bucket exists with one object/file
+
+**1. Write emptycontent**
+```text
+curl -X PUT \
+  "http://localhost:8000/objects/sample.txt?bucket_name=test-bucket" \
+  -H "Content-Type: text/plain" \
+  --data-binary ''
+```
+
+**Expected**
+400 Bad Request
+Request body cannot be empty
+
+**Output**
+```text
+INFO:     172.27.0.1:56260 - "PUT /objects/sample.txt?bucket_name=test-bucket HTTP/1.1" 400 Bad Request
+
+{"detail":"Request body cannot be empty"}
+```
+
 ### Edge Scenarios
 
-#### Scenario 22: Upload a large file within the limit to a bucket
+#### Scenario 28: Upload a large file within the limit to a bucket
 **Description**
 Implementation multipart parser defaults to max_part_size = 1024 * 1024 (1 MB)
 
