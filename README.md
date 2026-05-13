@@ -4,6 +4,11 @@ Amazon Simple Storage Service (Amazon S3) is an object storage service that prov
 
 This test automation framework validates an S3-compatible object storage service running locally.
 
+## FastAPI wrapper service
+The FastAPI wrapper service provides a small HTTP layer over the S3 operations implemented in the storage automation code. It uses `boto3` to talk to MinIO, which is running locally as an S3-compatible object storage service.
+
+In this project, MinIO acts as the system under test, while the FastAPI app acts as a simple test-facing adapter. That wrapper makes it easier to validate bucket and object operations with `curl`, browser-based docs, and later automated API tests without having to call the S3 SDK directly every time.
+
 ## System under test
 * MinIO container (local S3-compatible without AWS IAM.)
 * Small FastAPI wrapper service that uploads/downloads files to S3.
@@ -58,7 +63,23 @@ s3_storage_automation/
 ## Environment Setup
 1. MinIO S3-compatible storage in Docker.
 2. FastAPI wrapper service that uploads/downloads files to MinIO.
-3. Manual validation using curl to test setup works well.
+
+## API Endpoints
+- `GET /health` : service health check
+- `POST /buckets/bootstrap?bucket_name=...` : ensure a bucket exists
+- `POST /buckets?bucket_name=...` : create a bucket
+- `DELETE /buckets/{bucket_name}` : delete a bucket
+- `GET /buckets` : list buckets
+- `POST /files/{object_key}` : upload a file to the default configured bucket
+- `GET /files?bucket_name=...` : list objects in a bucket
+- `GET /files/{object_key}` : download a file from the default configured bucket
+- `DELETE /files/{object_key}?bucket_name=...` : delete an object from a bucket
+- `GET /objects/{object_key}/metadata?bucket_name=...` : get object metadata
+- `GET /objects/{object_key}/size?bucket_name=...` : get object size
+- `PUT /objects/{object_key}?bucket_name=...` : write raw object content
+- `GET /objects/{object_key}?bucket_name=...` : read raw object content
+
+Note: FastAPI also exposes interactive API docs at `http://localhost:8000/docs` and `http://localhost:8000/redoc`.
 
 ### Launch MinIO with Docker
 1. Build and start environment in a terminal and keep it open. This will star the 'portfolio-minio' and the 'portfolio-storage-api' services defined in the docker-composer.yml.
@@ -93,7 +114,7 @@ Stop containers and delete MinIO stored data:
    docker-compose down -v
 ```
 
-### Validate the FastAPI service manually
+### Validate the FastAPI service manually using curl
 On a different terminal run:
 ```text
 curl http://localhost:8000/health
@@ -120,4 +141,4 @@ Result:
 ```text
 {"bucket":"test-bucket","objects":[]}
 ```
-Note: For a more complete manual validation, tests are located at ../s3-storage-automation-framework/docs/Exploratory_Testing.md
+Note: For a more complete manual validation flow and additional `curl` examples, see [docs/Exploratory_Testing.md](docs/Exploratory_Testing.md).
