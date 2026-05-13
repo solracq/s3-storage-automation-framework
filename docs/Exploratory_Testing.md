@@ -445,6 +445,7 @@ INFO:   <client-ip>:<port> - "GET /objects/sample.txt?bucket_name=test-bucket HT
 Hello from the write_object endpoint
 ```
 
+
 ### Negative Scenarios
 #### Scenario 16: Create a bucket with an existing bucket name
 **Pre-conditions:**
@@ -683,6 +684,7 @@ INFO:     172.27.0.1:56260 - "PUT /objects/sample.txt?bucket_name=test-bucket HT
 {"detail":"Request body cannot be empty"}
 ```
 
+
 ### Edge Scenarios
 
 #### Scenario 28: Upload a large file within the limit to a bucket
@@ -707,4 +709,45 @@ Object uploaded successfully
 INFO:    <client-ip>:<port> - "POST /files/large-sample.txt HTTP/1.1" 200 OK
 
 {"message":"Object uploaded successfully","bucket":"test-bucket","object_key":"large-sample.txt","content_type":"text/plain"}
+```
+#### Scenario 29: Upload an file containing non-ASCII characters and read object
+**Pre-conditions:**
+- An existing bucket exist with no object
+- Local file with non-ASCII characteres
+
+**1. Upload a file with non-ASCII characters**
+```text
+curl -X POST \
+  -F "file=@non-ascii-sample.txt" \
+  http://localhost:8000/files/non-ascii-sample.txt
+```
+
+**2. Read object**
+```text
+curl "http://localhost:8000/objects/non-ascii-sample.txt?bucket_name=test-bucket"
+```
+
+**Expected**
+File content with non-ASCII characters can be read
+
+**Output**
+```text
+INFO:   <client-ip>:<port> - "GET /objects/non-ascii-sample.txt?bucket_name=test-bucket HTTP/1.1" 200 OK
+こんにちは！
+```
+##### 4.2 Upload the file
+```text
+curl -X POST \
+  -F "file=@sample.txt" \
+  http://localhost:8000/files/sample .txt
+```
+
+**Expected**
+Object uploaded successfully
+
+**Output**
+```text
+portfolio-storage-api  | INFO: - "POST /files/sample.txt HTTP/1.1" 200 OK
+
+{"message":"Object uploaded successfully","bucket":"test-bucket","object_key":"sample.txt","content_type":"text/plain"}
 ```
