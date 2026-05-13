@@ -23,7 +23,7 @@ def health_check():
 
 @app.post("/buckets/bootstrap")
 def bootstrap_bucket(bucket_name: str):
-    if not storage.bucket_exists(bucket_name):
+    if not storage.ensure_bucket_exists(bucket_name):
         storage.create_bucket(bucket_name)
     return {
         "bucket": storage.bucket_name,
@@ -38,7 +38,7 @@ async def upload_file(object_key: str, file: UploadFile = File(...)):
     if not content:
         raise HTTPException(status_code=400, detail="File content cannot be empty")
 
-    result = storage.upload_file(
+    result = storage.upload_bytes(
         object_key=object_key,
         content=content,
         content_type=file.content_type or "application/octet-stream",
@@ -50,10 +50,10 @@ async def upload_file(object_key: str, file: UploadFile = File(...)):
 
 
 @app.get("/files")
-def list_files():
+def list_files(bucket_name: str):
     return {
         "bucket": storage.bucket_name,
-        "objects": storage.list_objects(),
+        "objects": storage.list_objects(bucket_name),
     }
 
 
@@ -78,5 +78,5 @@ def download_file(object_key: str):
 
 
 @app.delete("/files/{object_key}")
-def delete_file(object_key: str):
-    return storage.delete_object(object_key)
+def delete_file(bucket_name: str, object_key: str):
+    return storage.delete_object(bucket_name, object_key)
