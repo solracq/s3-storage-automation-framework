@@ -83,11 +83,35 @@ docker ps
 | MinIO Web Console |   http://localhost:9001    |
 ```
 
-
 4. Teardown services. The command below stops containers and delete MinIO sotored data
 ```text
    docker-compose down -v
 ```
 
+### Validate the FastAPI service manually
+On a different terminal run:
+```text
+curl http://localhost:8000/health
+```
+Result:
+```text
+{
+  "status": "ok",
+  "service": "storage-api"
+}
+```
 
-
+```text
+curl -X POST "http://localhost:8000/buckets/bootstrap?bucket_name=test-bucket"
+```
+Result:
+```text
+{"bucket":"test-bucket","status":"ready"}
+```
+```text
+curl "http://localhost:8000/files?bucket_name=test-bucket"
+```
+Result:
+```text
+{"bucket":"test-bucket","objects":[]}
+```
