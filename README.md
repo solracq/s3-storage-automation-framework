@@ -120,4 +120,4 @@ Result:
 ```text
 {"bucket":"test-bucket","objects":[]}
 ```
-Note: For a more complete manual validation, tests are located at ../Users/carlosquiroz/dev/s3-storage-automation-framework/docs/Exploratory_Testing.md
+Note: For a more complete manual validation, tests are located at ../s3-storage-automation-framework/docs/Exploratory_Testing.md
