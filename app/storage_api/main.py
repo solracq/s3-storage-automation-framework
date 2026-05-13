@@ -1,5 +1,5 @@
 from fastapi import FastAPI, File, HTTPException, UploadFile
-from fastapi.responses import StreamingResponse
+from fastapi.responses import Response
 from botocore.exceptions import ClientError
 
 from src.storage_automation.s3_client import S3Client
@@ -60,8 +60,8 @@ async def list_files(bucket_name: str):
 async def download_file(object_key: str):
     try:
         file_stream, content_type = storage.download_file(object_key)
-        return StreamingResponse(
-            file_stream,
+        return Response(
+            content=file_stream.getvalue(),
             media_type=content_type,
             headers={
                 "Content-Disposition": f'attachment; filename="{object_key}"'
