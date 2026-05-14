@@ -178,3 +178,22 @@ Result:
 {"bucket":"test-bucket","objects":[]}
 ```
 **Note:** For a more complete manual validation flow and additional `curl` examples, see [docs/Exploratory_Testing.md](docs/Exploratory_Testing.md).
+
+## Automated Tests
+
+### Running Unit Test Suite
+```text
+./s3venv/bin/pytest tests/unit -q
+./s3venv/bin/pytest tests/unit/test_s3_client.py -q
+./s3venv/bin/pytest tests/unit/test_s3_resource.py -q
+```
+**Running unit tests only for the S3 Client implementation**
+```text
+./s3venv/bin/pytest tests/unit/test_s3_client.py -q
+```
+
+**Running unt tests only for the S3 Resource implementation**
+```text
+./s3venv/bin/pytest tests/unit/test_s3_resource.py -q
+```
+
