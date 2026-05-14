@@ -12,6 +12,9 @@ logger = logging.getLogger(__name__)
 class S3Client(S3):
 
     def __init__(self) -> None:
+        """
+        Initialize the S3 client with MinIO/S3-compatible configuration.
+        """
         self.bucket_name = settings.minio_bucket_name
         self.s3_client = boto3.client( # customizing how the S3 client talks to the MinIO service.
             "s3", # AWS service identifier, 's3' as the low-level client to build.
@@ -24,9 +27,28 @@ class S3Client(S3):
 
     @property
     def get_access_type(self) -> str:
+        """
+        Return the storage access implementation name.
+
+        Args:
+            None
+        Returns:
+            str: Human-readable access type label.
+        """
         return "S3 Client"
 
     def ensure_bucket_exists(self, bucket_name: str) -> None:
+        """
+        Ensure a bucket exists, creating it when it is missing.
+
+        Args:
+            bucket_name (str): Name of the bucket to verify.
+        Returns:
+            None
+        Raises:
+            ClientError: If the bucket check fails for a reason other than not found.
+            RuntimeError: If bucket creation is attempted but does not succeed.
+        """
         try:
             self.s3_client.head_bucket(Bucket=bucket_name)
         except ClientError as error:
@@ -43,6 +65,16 @@ class S3Client(S3):
                 raise RuntimeError(result.get("error") or f"Failed to create bucket: {bucket_name}")
 
     def create_bucket(self, bucket_name: str) -> dict:
+        """
+        Create a bucket in the configured S3-compatible storage.
+
+        Args:
+            bucket_name (str): Name of the bucket to create.
+        Returns:
+            dict: Success or failure details for the create operation.
+        Raises:
+            None
+        """
         try:
             create_bucket_args = {"Bucket": bucket_name}
 
@@ -62,6 +94,16 @@ class S3Client(S3):
             }
 
     def delete_bucket(self, bucket_name: str) -> dict:
+        """
+        Delete a bucket from the configured S3-compatible storage.
+
+        Args:
+            bucket_name (str): Name of the bucket to delete.
+        Returns:
+            dict: Success or failure details for the delete operation.
+        Raises:
+            None
+        """
         try:
             self.s3_client.delete_bucket(Bucket=bucket_name)
             return {"message": "Bucket deleted successfully"}
@@ -70,6 +112,16 @@ class S3Client(S3):
             return {"message": "Bucket deletion failed"}
 
     def list_buckets(self) -> dict:
+        """
+        List all buckets available to the configured client.
+
+        Args:
+            None
+        Returns:
+            dict: Raw bucket listing response or a failure message.
+        Raises:
+            None
+        """
         try:
             return self.s3_client.list_buckets()
         except ClientError as error:
@@ -77,6 +129,16 @@ class S3Client(S3):
             return {"message": "Bucket listing failed"}
 
     def list_objects(self, bucket_name: str) -> list[dict]:
+        """
+        List objects stored in a bucket.
+
+        Args:
+            bucket_name (str): Name of the bucket to inspect.
+        Returns:
+            list[dict]: Object summaries including key, size, and last modified date.
+        Raises:
+            None
+        """
         try:
             response = self.s3_client.list_objects_v2(Bucket=bucket_name)
             objects = response.get("Contents", [])
@@ -93,6 +155,17 @@ class S3Client(S3):
             return []
 
     def get_object_metadata(self, bucket_name: str, object_key: str) -> dict:
+        """
+        Retrieve metadata for an object stored in a bucket.
+
+        Args:
+            bucket_name (str): Name of the bucket containing the object.
+            object_key (str): Key of the object to inspect.
+        Returns:
+            dict: Metadata response for the object or a failure message.
+        Raises:
+            None
+        """
         try:
             return self.s3_client.head_object(Bucket=bucket_name, Key=object_key)
         except ClientError as error:
@@ -100,6 +173,17 @@ class S3Client(S3):
             return {"message": "Object metadata retrieval failed"}
 
     def get_object_size(self, bucket_name: str, object_key: str) -> int:
+        """
+        Get the size of an object in bytes.
+
+        Args:
+            bucket_name (str): Name of the bucket containing the object.
+            object_key (str): Key of the object to inspect.
+        Returns:
+            int: Object size in bytes, or `-1` on failure.
+        Raises:
+            None
+        """
         try:
             return self.s3_client.head_object(Bucket=bucket_name, Key=object_key)["ContentLength"]
         except ClientError as error:
@@ -107,6 +191,18 @@ class S3Client(S3):
             return -1
 
     def write_object(self, bucket_name: str, object_key: str, content: bytes) -> dict:
+        """
+        Write raw bytes to an object key in a bucket.
+
+        Args:
+            bucket_name (str): Name of the target bucket.
+            object_key (str): Key to create or overwrite.
+            content (bytes): Raw object content to store.
+        Returns:
+            dict: Success or failure details for the write operation.
+        Raises:
+            None
+        """
         try:
             self.ensure_bucket_exists(bucket_name)
             self.s3_client.put_object(Bucket=bucket_name, Key=object_key, Body=content)
@@ -116,6 +212,17 @@ class S3Client(S3):
             return {"message": "Object writing failed"}
 
     def read_object(self, bucket_name: str, object_key: str) -> bytes | dict:
+        """
+        Read the full content of an object from a bucket.
+
+        Args:
+            bucket_name (str): Name of the bucket containing the object.
+            object_key (str): Key of the object to read.
+        Returns:
+            bytes | dict: Raw object bytes on success, otherwise a failure message.
+        Raises:
+            None
+        """
         try:
             return self.s3_client.get_object(Bucket=bucket_name, Key=object_key)["Body"].read()
         except ClientError as error:
@@ -123,6 +230,17 @@ class S3Client(S3):
             return {"message": "Object reading failed"}
 
     def delete_object(self, bucket_name: str, object_key: str) -> dict:
+        """
+        Delete an object from a bucket.
+
+        Args:
+            bucket_name (str): Name of the bucket containing the object.
+            object_key (str): Key of the object to delete.
+        Returns:
+            dict: Success or failure details for the delete operation.
+        Raises:
+            None
+        """
         try:
             self.s3_client.delete_object(Bucket=bucket_name, Key=object_key)
             return {"message": "Object deleted successfully",
@@ -134,6 +252,18 @@ class S3Client(S3):
             return {"message": "Object deletion failed"}
 
     def upload_object(self, bucket_name: str, object_key: str, file_path: str) -> dict:
+        """
+        Upload a local file into a bucket using the provided object key.
+
+        Args:
+            bucket_name (str): Name of the target bucket.
+            object_key (str): Key to assign to the uploaded object.
+            file_path (str): Path to the local file to upload.
+        Returns:
+            dict: Success or failure details for the upload operation.
+        Raises:
+            None
+        """
         try:
             self.ensure_bucket_exists(bucket_name)
             self.s3_client.upload_file(file_path, bucket_name, object_key)
@@ -143,6 +273,18 @@ class S3Client(S3):
             return {"message": "Object upload failed"}
 
     def download_object(self, bucket_name: str, object_key: str, file_path: str) -> dict:
+        """
+        Download an object from a bucket to a local file path.
+
+        Args:
+            bucket_name (str): Name of the bucket containing the object.
+            object_key (str): Key of the object to download.
+            file_path (str): Local destination path for the downloaded file.
+        Returns:
+            dict: Success or failure details for the download operation.
+        Raises:
+            None
+        """
         try:
             self.s3_client.download_file(bucket_name, object_key, file_path)
             return {"message": "Object downloaded successfully"}
@@ -152,8 +294,16 @@ class S3Client(S3):
 
     def upload_bytes(self, object_key: str, content: bytes, content_type: str) -> dict:
         """
-        Upload in-memory bytes to the configured default bucket (put_object).
-        Typical use: FastAPI after await upload_file.read().
+        Upload in-memory bytes to the default configured bucket.
+
+        Args:
+            object_key (str): Key to assign to the uploaded object.
+            content (bytes): In-memory content to upload.
+            content_type (str): MIME type to store with the object.
+        Returns:
+            dict: Success or failure details for the upload operation.
+        Raises:
+            None
         """
         try:
             self.ensure_bucket_exists(self.bucket_name)
@@ -175,7 +325,14 @@ class S3Client(S3):
 
     def download_file(self, object_key: str) -> tuple[BytesIO, str]:
         """
-        Return object body as BytesIO and Content-Type (default bucket).
+        Download an object from the default bucket into memory.
+
+        Args:
+            object_key (str): Key of the object to download.
+        Returns:
+            tuple[BytesIO, str]: Object content as `BytesIO` plus the content type.
+        Raises:
+            ClientError: If the object cannot be retrieved from storage.
         """
         try:
             response = self.s3_client.get_object(
