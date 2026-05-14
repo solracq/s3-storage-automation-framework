@@ -1,0 +1,973 @@
+{
+  "info": {
+    "_postman_id": "6ca4204f-7796-40e0-89ea-dcb5dbb506be",
+    "name": "s3-storage-testing",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "40186590"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "const body = pm.response.json();",
+              "",
+              "pm.test(\"Service is healthy\", function () {",
+              "    pm.expect(body.status).to.eql(\"ok\");",
+              "    pm.expect(body.service).to.eql(\"storage-api\");",
+              "});",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/health",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "health"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Bootstrap the Bucket",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Bootstrap returns 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "const body = pm.response.json();",
+              "",
+              "pm.test(\"Bucket is ready\", function () {",
+              "    pm.expect(body.status).to.eql(\"ready\");",
+              "});",
+              "",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/buckets/bootstrap?bucket_name={{bucket_name}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "buckets",
+            "bootstrap"
+          ],
+          "query": [
+            {
+              "key": "bucket_name",
+              "value": "{{bucket_name}}",
+              "description": "Name of the bucket"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Upload File",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Upload returns 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "const body = pm.response.json();",
+              "",
+              "pm.test(\"Upload succeeded\", function () {",
+              "    pm.expect(body.message).to.eql(\"Object uploaded successfully\");",
+              "    pm.expect(body.object_key).to.eql(pm.collectionVariables.get(\"object_key\"));",
+              "});",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "description": "file to upload to the bucket",
+              "type": "file",
+              "uuid": "2e7eb3b6-4f9e-4663-83b2-32ee645a84e0",
+              "src": "/Users/carlosquiroz/dev/s3-storage-automation-framework/sample.txt"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/files/{{object_key}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "files",
+            "{{object_key}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "List Files",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"List files returns 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "const body = pm.response.json();",
+              "",
+              "pm.test(\"Uploaded file is listed\", function () {",
+              "    const key = pm.collectionVariables.get(\"object_key\");",
+              "    const found = body.objects.some(obj => obj.key === key);",
+              "    pm.expect(found).to.eql(true);",
+              "});",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/files?bucket_name={{bucket_name}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "files"
+          ],
+          "query": [
+            {
+              "key": "bucket_name",
+              "value": "{{bucket_name}}"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Download File",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Download returns 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Attachment header is present\", function () {",
+              "    pm.expect(pm.response.headers.get(\"Content-Disposition\"))",
+              "      .to.include(`filename=\"${pm.collectionVariables.get(\"object_key\")}\"`);",
+              "});",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/files/{{object_key}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "files",
+            "{{object_key}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Delete File",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Delete returns 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "const body = pm.response.json();",
+              "",
+              "pm.test(\"Delete succeeded\", function () {",
+              "    pm.expect(body.message).to.eql(\"Object deleted successfully\");",
+              "});",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/files/{{object_key}}?bucket_name={{bucket_name}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "files",
+            "{{object_key}}"
+          ],
+          "query": [
+            {
+              "key": "bucket_name",
+              "value": "{{bucket_name}}"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Create Bucket",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Create bucket returns 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "const body = pm.response.json();",
+              "",
+              "pm.test(\"Response contains message\", function () {",
+              "    pm.expect(body).to.have.property(\"message\");",
+              "});",
+              "",
+              "pm.test(\"Bucket create result is valid\", function () {",
+              "    pm.expect([",
+              "        \"Bucket created successfully\",",
+              "        \"Bucket creation failed\"",
+              "    ]).to.include(body.message);",
+              "});",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/buckets?bucket_name={{bucket_name}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "buckets"
+          ],
+          "query": [
+            {
+              "key": "bucket_name",
+              "value": "{{bucket_name}}"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "List Bucket",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"List buckets returns 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "const body = pm.response.json();",
+              "",
+              "pm.test(\"Buckets array is present\", function () {",
+              "    pm.expect(body).to.have.property(\"Buckets\");",
+              "    pm.expect(body.Buckets).to.be.an(\"array\");",
+              "});",
+              "",
+              "pm.test(\"Expected bucket is listed\", function () {",
+              "    const bucketName = pm.collectionVariables.get(\"bucket_name\");",
+              "    const found = body.Buckets.some(bucket => bucket.Name === bucketName);",
+              "    pm.expect(found).to.eql(true);",
+              "});",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/buckets",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "buckets"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Delete Bucket",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Delete returns 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "const body = pm.response.json();",
+              "",
+              "pm.test(\"Delete succeeded\", function () {",
+              "    pm.expect(body.message).to.eql(\"Bucket deleted successfully\");",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/buckets/{{bucket_name}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "buckets",
+            "{{bucket_name}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Object Metadata",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Metadata returns 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "const body = pm.response.json();",
+              "",
+              "pm.test(\"Metadata contains core fields\", function () {",
+              "    pm.expect(body).to.have.property(\"ContentLength\");",
+              "    pm.expect(body).to.have.property(\"ETag\");",
+              "    pm.expect(body).to.have.property(\"ContentType\");",
+              "});",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/objects/{{object_key}}/metadata?bucket_name={{bucket_name}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "objects",
+            "{{object_key}}",
+            "metadata"
+          ],
+          "query": [
+            {
+              "key": "bucket_name",
+              "value": "{{bucket_name}}"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Object Size",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Size returns 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "const body = pm.response.json();",
+              "",
+              "pm.test(\"Size is greater than zero\", function () {",
+              "    pm.expect(body.size).to.be.above(0);",
+              "});",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/objects/{{object_key}}/size?bucket_name={{bucket_name}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "objects",
+            "{{object_key}}",
+            "size"
+          ],
+          "query": [
+            {
+              "key": "bucket_name",
+              "value": "{{bucket_name}}"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Write Object",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Write returns 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "const body = pm.response.json();",
+              "",
+              "pm.test(\"Write succeeded\", function () {",
+              "    pm.expect(body.message).to.eql(\"Object written successfully\");",
+              "});",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "text/plain",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "file",
+          "file": {
+            "src": "/Users/carlosquiroz/dev/s3-storage-automation-framework/sample.txt"
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/objects/{{object_key}}?bucket_name={{bucket_name}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "objects",
+            "{{object_key}}"
+          ],
+          "query": [
+            {
+              "key": "bucket_name",
+              "value": "{{bucket_name}}"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Read Object",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Read returns 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Body is not empty\", function () {",
+              "    pm.expect(pm.response.text().length).to.be.above(0);",
+              "});",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/objects/{{object_key}}?bucket_name={{bucket_name}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "objects",
+            "{{object_key}}"
+          ],
+          "query": [
+            {
+              "key": "bucket_name",
+              "value": "{{bucket_name}}"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Upload Without File Field",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Missing file returns 422\", function () {",
+              "    pm.response.to.have.status(422);",
+              "});",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/files/{{object_key}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "files",
+            "{{object_key}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Upload Empty File",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Empty file returns 400\", function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "",
+              "const body = pm.response.json();",
+              "",
+              "pm.test(\"Empty file message is correct\", function () {",
+              "    pm.expect(body.detail).to.eql(\"File content cannot be empty\");",
+              "});",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "uuid": "3b884e99-7acd-4153-8411-85ea1df9a87d",
+              "src": "/Users/carlosquiroz/dev/s3-storage-automation-framework/empty-sample.txt"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/files/{{empty_file}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "files",
+            "{{empty_file}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "List Files Missing bucket_name",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Missing bucket_name returns 422\", function () {",
+              "    pm.response.to.have.status(422);",
+              "});",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/files",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "files"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Download Missing File",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Missing file returns 404\", function () {",
+              "    pm.response.to.have.status(404);",
+              "});",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/files/{{missing_object_key}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "files",
+            "{{missing_object_key}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Delete Missing Bucket",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Delete missing bucket returns current API response\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "const body = pm.response.json();",
+              "",
+              "pm.test(\"Delete missing bucket failed\", function () {",
+              "    pm.expect(body.message).to.eql(\"Bucket deletion failed\");",
+              "});",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/buckets/missing-bucket",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "buckets",
+            "missing-bucket"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Create Existing Bucket",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Duplicate bucket create returns current API response\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "const body = pm.response.json();",
+              "",
+              "pm.test(\"Duplicate bucket create failed\", function () {",
+              "    pm.expect(body.message).to.eql(\"Bucket creation failed\");",
+              "});",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/buckets?bucket_name={{bucket_name}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "buckets"
+          ],
+          "query": [
+            {
+              "key": "bucket_name",
+              "value": "{{bucket_name}}"
+            }
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": ""
+    },
+    {
+      "key": "bucket_name",
+      "value": ""
+    },
+    {
+      "key": "object_key",
+      "value": ""
+    },
+    {
+      "key": "missing_object_key",
+      "value": ""
+    },
+    {
+      "key": "secondary_bucket_name",
+      "value": ""
+    },
+    {
+      "key": "empty_file",
+      "value": ""
+    }
+  ]
+}
