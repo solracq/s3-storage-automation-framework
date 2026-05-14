@@ -9,6 +9,14 @@ The FastAPI wrapper service provides a small HTTP layer over the S3 operations i
 
 In this project, MinIO acts as the system under test, while the FastAPI app acts as a simple test-facing adapter. That wrapper makes it easier to validate bucket and object operations with `curl`, browser-based docs, and later automated API tests without having to call the S3 SDK directly every time.
 
+## S3 client vs resource implementations
+This project keeps both `s3_client.py` and `s3_resource.py` on purpose so the same MinIO-backed scenarios can be exercised through the two main `boto3` access styles.
+
+- `s3_client.py` uses `boto3.client("s3")`, which is the lower-level SDK interface. It stays close to the raw S3 API, returns dictionary-shaped responses, and is useful when the test needs explicit request/response handling that mirrors the wire-level operations.
+- `s3_resource.py` uses `boto3.resource("s3")`, which is the higher-level, object-oriented SDK interface. It exposes helpers such as `Bucket` and `Object`, and is useful when the test benefits from more readable bucket/object interactions.
+
+Keeping both implementations in the repository makes it easier to compare low-level and high-level S3 calls against the same storage service, and to document where a resource abstraction is convenient versus where a client-style dictionary response is a better fit.
+
 ## System under test
 * MinIO container (local S3-compatible without AWS IAM.)
 * Small FastAPI wrapper service that uploads/downloads files to S3.
@@ -107,7 +115,7 @@ docs/Postman_collection_run_files/non-ascii-sample.txt
 - `PUT /objects/{object_key}?bucket_name=...` : write raw object content
 - `GET /objects/{object_key}?bucket_name=...` : read raw object content
 
-Note: FastAPI also exposes interactive API docs at `http://localhost:8000/docs` and `http://localhost:8000/redoc`.
+**Note:** FastAPI also exposes interactive API docs at `http://localhost:8000/docs` and `http://localhost:8000/redoc`.
 
 ### Launch MinIO with Docker
 1. Build and start environment in a terminal and keep it open. This will star the 'portfolio-minio' and the 'portfolio-storage-api' services defined in the docker-composer.yml.
@@ -169,4 +177,4 @@ Result:
 ```text
 {"bucket":"test-bucket","objects":[]}
 ```
-Note: For a more complete manual validation flow and additional `curl` examples, see [docs/Exploratory_Testing.md](docs/Exploratory_Testing.md).
+**Note:** For a more complete manual validation flow and additional `curl` examples, see [docs/Exploratory_Testing.md](docs/Exploratory_Testing.md).

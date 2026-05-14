@@ -1,3 +1,13 @@
+"""
+Low-level S3 access implementation built on top of ``boto3.client("s3")``.
+
+This module keeps the storage operations close to the raw S3 API surface:
+requests are expressed with explicit operation names and most successful
+responses are returned as dictionaries. That makes this implementation useful
+for tests that need predictable request/response handling and behavior that is
+easy to compare with the underlying S3-compatible service.
+"""
+
 from io import BytesIO
 
 import boto3
@@ -10,6 +20,14 @@ import logging
 logger = logging.getLogger(__name__)
 
 class S3Client(S3):
+    """
+    Low-level S3 wrapper that uses client-style calls.
+
+    The boto3 client API maps directly to named S3 operations such as
+    ``create_bucket`` or ``head_object`` and commonly returns dictionary
+    payloads. This makes the class a good fit when tests need explicit control
+    over low-level calls and response inspection.
+    """
 
     def __init__(self) -> None:
         """

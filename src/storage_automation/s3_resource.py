@@ -1,3 +1,12 @@
+"""
+Higher-level S3 access implementation built on top of ``boto3.resource("s3")``.
+
+This module uses boto3's object-oriented resource layer, where buckets and
+objects are represented as Python objects and collections. It is useful for
+tests that prefer more readable, high-level interactions while still allowing
+fall back to ``meta.client`` when a lower-level S3 response shape is needed.
+"""
+
 import boto3
 from botocore.client import Config
 from botocore.exceptions import ClientError
@@ -8,6 +17,15 @@ import logging
 logger = logging.getLogger(__name__)
 
 class S3Resource(S3):
+    """
+    High-level S3 wrapper that uses resource-style calls.
+
+    The boto3 resource API exposes abstractions such as ``Bucket`` and
+    ``Object`` and supports object collections, which can make storage tests
+    easier to read. This class complements ``S3Client`` by demonstrating the
+    higher-level SDK access pattern against the same MinIO backend.
+    """
+
     def __init__(self) -> None:
         """
         Initialize the S3 resource with MinIO/S3-compatible configuration.
