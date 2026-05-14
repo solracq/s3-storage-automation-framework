@@ -9,6 +9,9 @@ logger = logging.getLogger(__name__)
 
 class S3Resource(S3):
     def __init__(self) -> None:
+        """
+        Initialize the S3 resource with MinIO/S3-compatible configuration.
+        """
         self.bucket_name = settings.minio_bucket_name
         self.s3_resource = boto3.resource( # Same customization as the client so MinIO behaves the same for both.
             "s3",
@@ -22,9 +25,30 @@ class S3Resource(S3):
 
     @property
     def get_access_type(self) -> str:
+        """
+        Return the storage access implementation name.
+
+        Args:
+            None
+        Returns:
+            str: Human-readable access type label.
+        Raises:
+            None
+        """
         return "S3 Resource"
 
     def ensure_bucket_exists(self, bucket_name: str) -> None:
+        """
+        Ensure a bucket exists, creating it when it is missing.
+
+        Args:
+            bucket_name (str): Name of the bucket to verify.
+        Returns:
+            None
+        Raises:
+            ClientError: If the bucket check fails for a reason other than not found.
+            RuntimeError: If bucket creation is attempted but does not succeed.
+        """
         try:
             self.s3_resource.meta.client.head_bucket(Bucket=bucket_name)
         except ClientError as error:
@@ -41,6 +65,16 @@ class S3Resource(S3):
                 raise RuntimeError(result.get("error") or f"Failed to create bucket: {bucket_name}")
 
     def create_bucket(self, bucket_name: str) -> dict:
+        """
+        Create a bucket in the configured S3-compatible storage.
+
+        Args:
+            bucket_name (str): Name of the bucket to create.
+        Returns:
+            dict: Success or failure details for the create operation.
+        Raises:
+            None
+        """
         try:
             create_bucket_args = {"Bucket": bucket_name}
 
@@ -60,6 +94,16 @@ class S3Resource(S3):
             }
 
     def delete_bucket(self, bucket_name: str) -> dict:
+        """
+        Delete a bucket after removing its contents.
+
+        Args:
+            bucket_name (str): Name of the bucket to delete.
+        Returns:
+            dict: Success or failure details for the delete operation.
+        Raises:
+            None
+        """
         try:
             bucket = self.s3_resource.Bucket(bucket_name)
             versioning_status = self.s3_resource.BucketVersioning(bucket_name).status
@@ -79,6 +123,16 @@ class S3Resource(S3):
             return {"message": "Bucket deletion failed"}
 
     def list_buckets(self) -> dict:
+        """
+        List all buckets available to the configured resource client.
+
+        Args:
+            None
+        Returns:
+            dict: Raw bucket listing response or a failure message.
+        Raises:
+            None
+        """
         try:
             return self.s3_resource.meta.client.list_buckets()
         except ClientError as error:
@@ -86,6 +140,16 @@ class S3Resource(S3):
             return {"message": "Bucket listing failed"}
 
     def list_objects(self, bucket_name: str) -> list[dict]:
+        """
+        List objects stored in a bucket.
+
+        Args:
+            bucket_name (str): Name of the bucket to inspect.
+        Returns:
+            list[dict]: Object summaries including key, size, and last modified date.
+        Raises:
+            None
+        """
         try:
             objects = self.s3_resource.Bucket(bucket_name).objects.all()
             return [
@@ -101,6 +165,17 @@ class S3Resource(S3):
             return []
 
     def get_object_metadata(self, bucket_name: str, object_key: str) -> dict:
+        """
+        Retrieve metadata for an object stored in a bucket.
+
+        Args:
+            bucket_name (str): Name of the bucket containing the object.
+            object_key (str): Key of the object to inspect.
+        Returns:
+            dict: Metadata response for the object or a failure message.
+        Raises:
+            None
+        """
         try:
             return self.s3_resource.meta.client.head_object(Bucket=bucket_name, Key=object_key)
         except ClientError as error:
@@ -108,6 +183,17 @@ class S3Resource(S3):
             return {"message": "Object metadata retrieval failed"}
 
     def get_object_size(self, bucket_name: str, object_key: str) -> int:
+        """
+        Get the size of an object in bytes.
+
+        Args:
+            bucket_name (str): Name of the bucket containing the object.
+            object_key (str): Key of the object to inspect.
+        Returns:
+            int: Object size in bytes, or `-1` on failure.
+        Raises:
+            None
+        """
         try:
             return self.s3_resource.meta.client.head_object(Bucket=bucket_name, Key=object_key)["ContentLength"]
         except ClientError as error:
@@ -115,6 +201,18 @@ class S3Resource(S3):
             return -1
 
     def write_object(self, bucket_name: str, object_key: str, content: bytes) -> dict:
+        """
+        Write raw bytes to an object key in a bucket.
+
+        Args:
+            bucket_name (str): Name of the target bucket.
+            object_key (str): Key to create or overwrite.
+            content (bytes): Raw object content to store.
+        Returns:
+            dict: Success or failure details for the write operation.
+        Raises:
+            None
+        """
         try:
             self.ensure_bucket_exists(bucket_name)
             self.s3_resource.Object(bucket_name, object_key).put(Body=content)
@@ -124,6 +222,17 @@ class S3Resource(S3):
             return {"message": "Object writing failed"}
 
     def read_object(self, bucket_name: str, object_key: str) -> bytes | dict:
+        """
+        Read the full content of an object from a bucket.
+
+        Args:
+            bucket_name (str): Name of the bucket containing the object.
+            object_key (str): Key of the object to read.
+        Returns:
+            bytes | dict: Raw object bytes on success, otherwise a failure message.
+        Raises:
+            None
+        """
         try:
             return self.s3_resource.Object(bucket_name, object_key).get()["Body"].read()
         except ClientError as error:
@@ -131,6 +240,17 @@ class S3Resource(S3):
             return {"message": "Object reading failed"}
 
     def delete_object(self, bucket_name: str, object_key: str) -> dict:
+        """
+        Delete an object from a bucket.
+
+        Args:
+            bucket_name (str): Name of the bucket containing the object.
+            object_key (str): Key of the object to delete.
+        Returns:
+            dict: Success or failure details for the delete operation.
+        Raises:
+            None
+        """
         try:
             self.s3_resource.Object(bucket_name, object_key).delete()
             return {"message": "Object deleted successfully",
@@ -142,6 +262,18 @@ class S3Resource(S3):
             return {"message": "Object deletion failed"}
 
     def upload_object(self, bucket_name: str, object_key: str, file_path: str) -> dict:
+        """
+        Upload a local file into a bucket using the provided object key.
+
+        Args:
+            bucket_name (str): Name of the target bucket.
+            object_key (str): Key to assign to the uploaded object.
+            file_path (str): Path to the local file to upload.
+        Returns:
+            dict: Success or failure details for the upload operation.
+        Raises:
+            None
+        """
         try:
             self.ensure_bucket_exists(bucket_name)
             self.s3_resource.Bucket(bucket_name).upload_file(file_path, object_key)
@@ -151,6 +283,18 @@ class S3Resource(S3):
             return {"message": "Object upload failed"}
 
     def download_object(self, bucket_name: str, object_key: str, file_path: str) -> dict:
+        """
+        Download an object from a bucket to a local file path.
+
+        Args:
+            bucket_name (str): Name of the bucket containing the object.
+            object_key (str): Key of the object to download.
+            file_path (str): Local destination path for the downloaded file.
+        Returns:
+            dict: Success or failure details for the download operation.
+        Raises:
+            None
+        """
         try:
             self.s3_resource.Bucket(bucket_name).download_file(object_key, file_path)
             return {"message": "Object downloaded successfully"}
