@@ -73,17 +73,11 @@ portfolio-storage-api  | INFO:  - "POST /buckets/bootstrap?bucket_name=test-buck
 {"bucket":"test-bucket","status":"ready"}
 ```
 
-#### Scenario 4: Create and upload a file to a bucket, then apply file/object related operations such as list, download, compare and delete file.
+##### Scenario 4: Upload a file
+**Pre-conditions:**
+A bucket has been created and a file is available locally
 
-##### 4.1 Create a sample file
-```text
-echo "Hello from local MinIO S3 automation framework" > sample.txt
-```
-
-**Expected**
-File created
-
-##### 4.2 Upload the file
+**Upload a file**
 ```text
 curl -X POST \
   -F "file=@sample.txt" \
@@ -100,7 +94,11 @@ portfolio-storage-api  | INFO: - "POST /files/sample.txt HTTP/1.1" 200 OK
 {"message":"Object uploaded successfully","bucket":"test-bucket","object_key":"sample.txt","content_type":"text/plain"}
 ```
 
-##### 4.3 List files
+##### Scenario 5: list files in bucket
+**Pre-conditions:**
+A bucket has been created and a file is available locally
+
+**Upload a file**
 ```text
 curl "http://localhost:8000/files?bucket_name=test-bucket"
 ```
@@ -115,7 +113,10 @@ portfolio-storage-api  | INFO: - "GET /files?bucket_name=test-bucket HTTP/1.1" 2
 {"bucket":"test-bucket","objects":[{"key":"sample.txt","size":47,"last_modified":"2026-05-13T03:35:45.022000+00:00"}]}
 ```
 
-##### 4.4 Download the file
+##### Scenario 6: Download a file from a bucket
+**Pre-conditions:**
+A bucket has been created and contains a file
+
 ```text
 curl http://localhost:8000/files/sample.txt -o downloaded-sample.txt
 ```
@@ -132,20 +133,10 @@ portfolio-storage-api  | INFO: - "GET /files/sample.txt HTTP/1.1" 200 OK
 100    47  100    47    0     0   3523      0 --:--:-- --:--:-- --:--:--  3615
 ```
 
-```text
-cat downloaded-sample.txt:
-Hello from local MinIO S3 automation framework
-```
+##### Scenario 7: Delete a file from bucket
+**Pre-conditions:**
+A bucket has been created and contains a file
 
-##### 4.5 Compare files
-```text
-diff sample.txt downloaded-sample.txt
-```
-
-**Expected**
-If there is no output from diff, the files match.
-
-##### 4.6 Delete the file
 ```text
 curl -X DELETE "http://localhost:8000/files/sample.txt?bucket_name=test-bucket"
 ```
@@ -160,7 +151,7 @@ portfolio-storage-api  | INFO: - "DELETE /files/sample.txt?bucket_name=test-buck
 {"message":"Object deleted successfully","bucket_name":"test-bucket","object_key":"sample.txt"}
 ```
 
-##### 5 Upload an image then download it and compare checksums with `shasum -a 256`
+##### Scenario 8: Upload an image then download it and compare checksums with `shasum -a 256`
 **Pre-conditions:**
 - A bucket exists with the name "test-bucket"
   
@@ -200,7 +191,7 @@ INFO:   <client-ip>:<port> - "POST /files/image.png HTTP/1.1" 200 OK
 4e88b7c9bd15d915fd2793820df1aa61c10199f7e192ebd4a5f32b80dcbcb273  downloaded-image.png
 ```
 
-#### Scenario 6: Create bucket
+#### Scenario 9: Create bucket
 ```text
 curl -X POST "http://localhost:8000/buckets?bucket_name=test-bucket"
 ```
@@ -214,7 +205,7 @@ INFO:   <client-ip>:<port>  - "POST /buckets?bucket_name=test-bucket2 HTTP/1.1" 
 {"message":"Bucket created successfully"}
 ```
 
-#### Scenario 7: List buckets
+#### Scenario 10: List buckets
 ```text
 curl "http://localhost:8000/buckets"
 ```
@@ -231,7 +222,7 @@ INFO:   <client-ip>:<port> - "GET /buckets HTTP/1.1" 200 OK
 {"ResponseMetadata":{"RequestId":"18AF29E9B45D9B90","HostId":"dd9025bab4ad464b049177c95eb6ebf374d3b3fd1af9251148b658df7ac2e3e8","HTTPStatusCode":200,"HTTPHeaders":{"accept-ranges":"bytes","content-length":"464","content-type":"application/xml","server":"MinIO","strict-transport-security":"max-age=31536000; includeSubDomains","vary":"Origin, Accept-Encoding","x-amz-id-2":"dd9025bab4ad464b049177c95eb6ebf374d3b3fd1af9251148b658df7ac2e3e8","x-amz-request-id":"18AF29E9B45D9B90","x-content-type-options":"nosniff","x-ratelimit-limit":"4278","x-ratelimit-remaining":"4278","x-xss-protection":"1; mode=block","date":"Wed, 13 May 2026 15:34:21 GMT"},"RetryAttempts":0},"Buckets":[{"Name":"test-bucket","CreationDate":"2026-05-13T01:07:36.480000+00:00"},{"Name":"test-bucket2","CreationDate":"2026-05-13T15:32:17.234000+00:00"}],"Owner":{"DisplayName":"minio","ID":"02d6176db174dc93cb1b899f7c6078f08654445fe8cf1b6ce98d8855f66bdbf4"}}
 ```
 
-#### Scenario 8: Delete an empty bucket
+#### Scenario 11: Delete an empty bucket
 ```text
 curl -X DELETE "http://localhost:8000/buckets/test-bucket2"
 ```
@@ -245,7 +236,7 @@ INFO:   <client-ip>:<port> - "DELETE /buckets/test-bucket2 HTTP/1.1" 200 OK
 {"message":"Bucket deleted successfully"}
 ```
 
-#### Scenario 9: Delete a bucket with objects by deleting objects first
+#### Scenario 12: Delete a bucket with objects by deleting objects first
 **pre-conditions**
 - Existing bucket contains one or more objects
 
@@ -271,7 +262,7 @@ INFO:   <client-ip>:<port> - "DELETE /buckets/test-bucket2 HTTP/1.1" 200 OK
 {"message":"Bucket deleted successfully"}
 ```
 
-#### Scenario 10: Get Object Metadata
+#### Scenario 13: Get Object Metadata
 **Pre-conditions**
 A bucket exists with an object stored
 
@@ -297,7 +288,7 @@ INFO:   <client-ip>:<port> - "GET /objects/sample.txt/metadata?bucket_name=test-
 {"ResponseMetadata":{"RequestId":"18AF2B7065A201D4","HostId":"dd9025bab4ad464b049177c95eb6ebf374d3b3fd1af9251148b658df7ac2e3e8","HTTPStatusCode":200,"HTTPHeaders":{"accept-ranges":"bytes","content-length":"47","content-type":"text/plain","etag":"\"ce52118d5f6333dbb5d7ebd0a1fc6893\"","last-modified":"Wed, 13 May 2026 16:01:30 GMT","server":"MinIO","strict-transport-security":"max-age=31536000; includeSubDomains","vary":"Origin, Accept-Encoding","x-amz-id-2":"dd9025bab4ad464b049177c95eb6ebf374d3b3fd1af9251148b658df7ac2e3e8","x-amz-request-id":"18AF2B7065A201D4","x-content-type-options":"nosniff","x-ratelimit-limit":"4278","x-ratelimit-remaining":"4278","x-xss-protection":"1; mode=block","date":"Wed, 13 May 2026 16:02:19 GMT"},"RetryAttempts":0},"AcceptRanges":"bytes","LastModified":"2026-05-13T16:01:30+00:00","ContentLength":47,"ETag":"\"ce52118d5f6333dbb5d7ebd0a1fc6893\"","ContentType":"text/plain","Metadata":{}}
 ```
 
-#### Scenario 11: Get Object Size
+#### Scenario 14: Get Object Size
 **Pre-conditions**
 A bucket exists with one object/file
 
@@ -314,7 +305,7 @@ INFO:   <client-ip>:<port> - "GET /objects/sample.txt/size?bucket_name=test-buck
 {"bucket_name":"test-bucket","object_key":"sample.txt","size":47}
 ```
 
-#### Scenario 12: Get Object Size changes as data gets updated
+#### Scenario 15: Get Object Size changes as data gets updated
 **Pre-conditions**
 A bucket exists with one object/file
 
@@ -361,7 +352,7 @@ INFO:   <client-ip>:<port> - "GET /objects/sample.txt/size?bucket_name=test-buck
 {"bucket_name":"test-bucket","object_key":"sample.txt","size":190}
 ```
 
-#### Scenario 13: Write Object
+#### Scenario 16: Write Object
 **Pre-conditions**
 A bucket exists with one object/file
 
@@ -395,7 +386,7 @@ INFO:   <client-ip>:<port> - "PUT /objects/sample.txt?bucket_name=test-bucket HT
 {"message":"Object written successfully"}
 ```
 
-#### Scenario 14: Overwrite an existing object and check GET returns new content
+#### Scenario 17: Overwrite an existing object and check GET returns new content
 **Pre-conditions**
 A bucket exists with an object (txt file)
 
@@ -427,7 +418,7 @@ INFO:  <client-ip>:<port> - "GET /objects/sample.txt?bucket_name=test-bucket HTT
 New data added
 ```
 
-#### Scenario 15: Read Object
+#### Scenario 18: Read Object
 **Pre-conditions**
 A bucket exists with one object/file with data
 
@@ -447,7 +438,7 @@ Hello from the write_object endpoint
 
 
 ### Negative Scenarios
-#### Scenario 16: Create a bucket with an existing bucket name
+#### Scenario 19: Create a bucket with an existing bucket name
 **Pre-conditions:**
 - An existing bucket exist with the name "test-bucket"
 
@@ -467,7 +458,7 @@ Bucket creation failed: An error occurred (BucketAlreadyOwnedByYou) when calling
 {"message":"Bucket creation failed","bucket_name":"test-bucket","error":"An error occurred (BucketAlreadyOwnedByYou) when calling the CreateBucket operation: Your previous request to create the named bucket succeeded and you already own it."}
 ```
 
-#### Scenario 17: List an empty list of buckets
+#### Scenario 20: List an empty list of buckets
 **Pre-conditions:**
 - No buckets available in the storage server
 
@@ -486,7 +477,7 @@ INFO:  <client-ip>:<port>  - "GET /buckets HTTP/1.1" 200 OK
 {"ResponseMetadata":{"RequestId":"18AF2A6A41897D60","HostId":"dd9025bab4ad464b049177c95eb6ebf374d3b3fd1af9251148b658df7ac2e3e8","HTTPStatusCode":200,"HTTPHeaders":{"accept-ranges":"bytes","content-length":"275","content-type":"application/xml","server":"MinIO","strict-transport-security":"max-age=31536000; includeSubDomains","vary":"Origin, Accept-Encoding","x-amz-id-2":"dd9025bab4ad464b049177c95eb6ebf374d3b3fd1af9251148b658df7ac2e3e8","x-amz-request-id":"18AF2A6A41897D60","x-content-type-options":"nosniff","x-ratelimit-limit":"4278","x-ratelimit-remaining":"4278","x-xss-protection":"1; mode=block","date":"Wed, 13 May 2026 15:43:33 GMT"},"RetryAttempts":0},"Buckets":[],"Owner":{"DisplayName":"minio","ID":"02d6176db174dc93cb1b899f7c6078f08654445fe8cf1b6ce98d8855f66bdbf4"}}
 ```
 
-#### Scenario 18: Delete an already deleted bucket
+#### Scenario 21: Delete an already deleted bucket
 **Pre-conditions:**
 - "test-bucket2" has been previously deleted
 
@@ -506,7 +497,7 @@ Bucket deletion failed: test-bucket2
 {"message":"Bucket deletion failed"}
 ```
 
-##### Scenario 19: Delete an already deleted object in bucket
+##### Scenario 22: Delete an already deleted object in bucket
 **Pre-conditions:**
 - Bucket exists with no object
 
@@ -524,7 +515,7 @@ INFO:   <client-ip>:<port> - "DELETE /files/sample.txt?bucket_name=test-bucket H
 {"message":"Object deleted successfully","bucket_name":"test-bucket","object_key":"sample.txt"}
 ```
 
-#### Scenario 20: Delete a bucket with objects in it
+#### Scenario 23: Delete a bucket with objects in it
 **Pre-conditions:**
 - bucket contains one or more objects
 
@@ -542,7 +533,7 @@ INFO:   <client-ip>:<port> - "DELETE /buckets/test-bucket HTTP/1.1" 200 OK
 {"message":"Bucket deletion failed"}
 ```
 
-#### Scenario 21: Upload a file that exceeds the multipart size limit
+#### Scenario 24: Upload a file that exceeds the multipart size limit
 **Description**
 Implementation multipart parser defaults to max_part_size = 1024 * 1024 (1 MB)
 
@@ -566,7 +557,7 @@ INFO:    <client-ip>:<port> - "POST /files/large-sample.txt HTTP/1.1" 400 Bad Re
 {"detail":"There was an error parsing the body"}
 ```
 
-#### Scenario 22: Upload an empty file to a bucket
+#### Scenario 25: Upload an empty file to a bucket
 **Pre-conditions:**
 - An existing bucket exist with the name "test-bucket"
 
@@ -587,7 +578,7 @@ INFO:   <client-ip>:<port> - "POST /files/empty-sample.txt HTTP/1.1" 400 Bad Req
 {"detail":"File content cannot be empty"}
 ```
 
-##### Scenario 23: Call any endpoint that require `bucket_name` without the query param
+##### Scenario 26: Call any endpoint that require `bucket_name` without the query param
 ** Pre-conditions
 - A bucket exists with an object
 
@@ -607,7 +598,7 @@ INFO:   <client-ip>:<port> - "GET /files HTTP/1.1" 422 Unprocessable Entity
 {"detail":[{"type":"missing","loc":["query","bucket_name"],"msg":"Field required","input":null}]}
 ```
 
-##### Scenario 24: Send an upload request without the multipart file field
+##### Scenario 27: Send an upload request without the multipart file field
 ```text
 curl -X POST http://localhost:8000/files/sample.txt
 ```
@@ -623,7 +614,7 @@ INFO:   <client-ip>:<port> - "POST /files/sample.txt HTTP/1.1" 422 Unprocessable
 {"detail":[{"type":"missing","loc":["body","file"],"msg":"Field required","input":null}]}
 ```
 
-##### Scenario 25: Download object for a missing object in bucket
+##### Scenario 28: Download object for a missing object in bucket
 - A bucket exists with no objects stored in it
 
 **Download the file**
@@ -644,7 +635,7 @@ Object download failed: An error occurred (NoSuchKey) when calling the GetObject
 100    41  100    41    0     0   3026      0 --:--:-- --:--:-- --:--:--  3153
 ```
 
-#### Scenario 26: Create bucket with invalid name
+#### Scenario 29: Create bucket with invalid name
 ```text
 curl -X POST "http://localhost:8000/buckets?bucket_name=TEST-b@ck3t"
 ```
@@ -661,7 +652,7 @@ portfolio-storage-api  | Invalid bucket name "TEST-b@ck3t": Bucket name must mat
 Internal Server Error
 ```
 
-#### Scenario 27: Write Object with empty data
+#### Scenario 30: Write Object with empty data
 **Pre-conditions**
 A bucket exists with one object/file
 
@@ -687,7 +678,7 @@ INFO:     172.27.0.1:56260 - "PUT /objects/sample.txt?bucket_name=test-bucket HT
 
 ### Edge Scenarios
 
-#### Scenario 28: Upload a large file within the limit to a bucket
+#### Scenario 31: Upload a large file within the limit to a bucket
 **Description**
 Implementation multipart parser defaults to max_part_size = 1024 * 1024 (1 MB)
 
@@ -710,7 +701,7 @@ INFO:    <client-ip>:<port> - "POST /files/large-sample.txt HTTP/1.1" 200 OK
 
 {"message":"Object uploaded successfully","bucket":"test-bucket","object_key":"large-sample.txt","content_type":"text/plain"}
 ```
-#### Scenario 29: Upload an file containing non-ASCII characters and read object
+#### Scenario 32: Upload an file containing non-ASCII characters and read object
 **Pre-conditions:**
 - An existing bucket exist with no object
 - Local file with non-ASCII characteres
@@ -735,11 +726,58 @@ File content with non-ASCII characters can be read
 INFO:   <client-ip>:<port> - "GET /objects/non-ascii-sample.txt?bucket_name=test-bucket HTTP/1.1" 200 OK
 こんにちは！
 ```
-##### 4.2 Upload the file
+
+### Integration Scenarios
+
+##### Scenario 33: Delete object then confirm removal
+
+**1. Create Bucket**
+```text
+curl -X POST "http://localhost:8000/buckets?bucket_name=test-bucket"
+```
+
+**2. Upload object**
 ```text
 curl -X POST \
   -F "file=@sample.txt" \
-  http://localhost:8000/files/sample .txt
+  http://localhost:8000/files/sample.txt
+```
+
+**3. Delete object**
+```text
+curl -X DELETE "http://localhost:8000/files/sample.txt?bucket_name=test-bucket"
+```
+
+**4. Read Object**
+```text
+curl "http://localhost:8000/objects/non-ascii-sample.txt?bucket_name=test-bucket"
+```
+
+**Expected**
+Object reading failed since object in bucket has been already deleted
+
+**Output**
+```text
+INFO:   <client-ip>:<port> - "GET /objects/non-ascii-sample.txt?bucket_name=test-bucket HTTP/1.1" 500 Internal Server Error
+
+{"detail":"Object reading failed"}
+```
+
+#### Scenario 34: Create and upload a file to a bucket, then apply file/object related operations such as list, download, compare and delete file.
+
+**1. Create a sample file**
+```text
+echo "Hello from local MinIO S3 automation framework" > sample.txt
+```
+
+**Expected**
+File created
+
+**2. Upload the file**
+```text
+curl -X POST \
+  -F "file=@sample.txt" \
+  http://localhost:8000/files/sample.txt
 ```
 
 **Expected**
@@ -750,4 +788,64 @@ Object uploaded successfully
 portfolio-storage-api  | INFO: - "POST /files/sample.txt HTTP/1.1" 200 OK
 
 {"message":"Object uploaded successfully","bucket":"test-bucket","object_key":"sample.txt","content_type":"text/plain"}
+```
+
+**3. List files**
+```text
+curl "http://localhost:8000/files?bucket_name=test-bucket"
+```
+
+**Expected**
+bucket object(s) listed
+
+**Output**
+```text
+portfolio-storage-api  | INFO: - "GET /files?bucket_name=test-bucket HTTP/1.1" 200 OK
+
+{"bucket":"test-bucket","objects":[{"key":"sample.txt","size":47,"last_modified":"2026-05-13T03:35:45.022000+00:00"}]}
+```
+
+**4. Download the file**
+```text
+curl http://localhost:8000/files/sample.txt -o downloaded-sample.txt
+```
+
+**Expected**
+File is downloaded successfully and its content matches the uploaded file
+
+**Output**
+```text
+portfolio-storage-api  | INFO: - "GET /files/sample.txt HTTP/1.1" 200 OK
+
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100    47  100    47    0     0   3523      0 --:--:-- --:--:-- --:--:--  3615
+```
+
+```text
+cat downloaded-sample.txt:
+Hello from local MinIO S3 automation framework
+```
+
+**5. Compare files**
+```text
+diff sample.txt downloaded-sample.txt
+```
+
+**Expected**
+If there is no output from diff, the files match.
+
+**6. Delete the file**
+```text
+curl -X DELETE "http://localhost:8000/files/sample.txt?bucket_name=test-bucket"
+```
+
+**Expected**
+Object deleted successfully
+
+**Output**
+```text
+portfolio-storage-api  | INFO: - "DELETE /files/sample.txt?bucket_name=test-bucket HTTP/1.1" 200 OK
+
+{"message":"Object deleted successfully","bucket_name":"test-bucket","object_key":"sample.txt"}
 ```
