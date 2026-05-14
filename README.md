@@ -64,6 +64,34 @@ s3_storage_automation/
 1. MinIO S3-compatible storage in Docker.
 2. FastAPI wrapper service that uploads/downloads files to MinIO.
 
+## Postman Setup
+Before running the exported Postman collection, set Postman's working directory to the root of this repository so file-based requests can resolve correctly.
+
+1. Open the Postman desktop app.
+2. Click the gear icon and open `Settings`.
+3. Go to the `General` tab.
+4. Find the `Working directory` setting.
+5. Click `Choose` or `Change`.
+6. Select the root folder of this repository.
+Example:
+```text
+/path/to/s3-storage-automation-framework
+```
+1. Save or close settings.
+2. Re-open the collection and verify the file-based requests reference files under:
+```text
+docs/Postman_collection_run_files/
+```
+
+Expected test asset files:
+```text
+docs/Postman_collection_run_files/sample.txt
+docs/Postman_collection_run_files/empty-sample.txt
+docs/Postman_collection_run_files/large-sample.txt
+docs/Postman_collection_run_files/image.png
+docs/Postman_collection_run_files/non-ascii-sample.txt
+```
+
 ## API Endpoints
 - `GET /health` : service health check
 - `POST /buckets/bootstrap?bucket_name=...` : ensure a bucket exists

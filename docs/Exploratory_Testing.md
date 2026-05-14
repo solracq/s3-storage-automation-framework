@@ -22,6 +22,31 @@ Document to show the initial manual testing activity to understand and validate 
 - Quote URLs that contain query parameters when using `zsh`, for example: `curl "http://localhost:8000/files?bucket_name=test-bucket"`.
 - The `/files/{object_key}` routes use the default configured bucket, while the `/objects/...` routes require an explicit `bucket_name` query parameter.
 
+## Postman Setup
+Before running the exported Postman collection, set Postman's working directory to the root of this repository so file-based requests can resolve correctly.
+
+1. Open the Postman desktop app.
+2. Open `Settings`.
+3. Go to `General`.
+4. Set `Working directory` to the repository root.
+Example:
+```text
+/path/to/s3-storage-automation-framework
+```
+5. Verify file-based requests point to files under:
+```text
+docs/Postman_collection_run_files/
+```
+
+Expected test asset files:
+```text
+docs/Postman_collection_run_files/sample.txt
+docs/Postman_collection_run_files/empty-sample.txt
+docs/Postman_collection_run_files/large-sample.txt
+docs/Postman_collection_run_files/image.png
+docs/Postman_collection_run_files/non-ascii-sample.txt
+```
+
 ## Test Scenarios
 
 ### Positive Scenarios
