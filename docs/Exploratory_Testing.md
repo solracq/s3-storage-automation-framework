@@ -35,7 +35,7 @@ Example:
 ```
 5. Verify file-based requests point to files under:
 ```text
-docs/Postman_collection_run_files/
+tests/data/
 ```
 
 Expected test asset files:

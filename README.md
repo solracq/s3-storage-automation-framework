@@ -88,7 +88,7 @@ Example:
 1. Save or close settings.
 2. Re-open the collection and verify the file-based requests reference files under:
 ```text
-docs/Postman_collection_run_files/
+tests/data/
 ```
 
 Expected test asset files:

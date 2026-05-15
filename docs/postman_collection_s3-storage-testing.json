@@ -144,7 +144,7 @@
               "description": "file to upload to the bucket",
               "type": "file",
               "uuid": "2e7eb3b6-4f9e-4663-83b2-32ee645a84e0",
-              "src": "docs/Postman_collection_run_files/sample.txt"
+              "src": "tests/data/sample.txt"
             }
           ]
         },
@@ -744,7 +744,7 @@
               "key": "file",
               "type": "file",
               "uuid": "3b884e99-7acd-4153-8411-85ea1df9a87d",
-              "src": "docs/Postman_collection_run_files/empty-sample.txt"
+              "src": "tests/data/empty-sample.txt"
             }
           ]
         },
