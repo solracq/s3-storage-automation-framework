@@ -197,3 +197,8 @@ Result:
 ./s3venv/bin/pytest tests/unit/test_s3_resource.py -q
 ```
 
+### Running Smoke Test Suite
+```text
+pytest -v -m smoke -s
+```
+
