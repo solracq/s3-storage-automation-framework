@@ -3,7 +3,7 @@ from pathlib import Path
 
 from app.storage_api.settings import settings
 
-ROOT_DIR = Path(__file__).resolve().parents[2]
+ROOT_DIR = Path(__file__).resolve().parents[2]  # Go up 3 levels until reaching root dir
 TEST_ASSETS_DIR = ROOT_DIR / "tests" / "data"
 
 BUCKET = settings.minio_bucket_name
