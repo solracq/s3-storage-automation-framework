@@ -14,7 +14,7 @@ if str(ROOT) not in sys.path:
 # Provide safe defaults so pydantic settings can initialize during test imports.
 os.environ.setdefault("S3_ENDPOINT_URL", "http://localhost:9000")
 os.environ.setdefault("AWS_ACCESS_KEY_ID", "minioadmin")
-os.environ.setdefault("AWS_SECRET_ACCESS_KEY", "minioadmin")
+os.environ.setdefault("AWS_SECRET_ACCESS_KEY", "minioadmin123")
 os.environ.setdefault("AWS_REGION", "us-east-1")
 os.environ.setdefault("MINIO_BUCKET_NAME", "test-bucket")
 
