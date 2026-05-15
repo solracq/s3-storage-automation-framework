@@ -189,10 +189,10 @@ class TestS3ClientSmoke:
         """
         response = s3_client.get_object_metadata(bucket_with_object, OBJECT_KEY)
     
-        assert response['ResponseMetadata']['HTTPHeaders']['content-length'], "'content-length' missed in metadata"
-        assert response['ResponseMetadata']['HTTPHeaders']['last-modified'], "'LastModified' missed in metadata"
-        assert response['ResponseMetadata']['HTTPHeaders']['etag'], "'ETag' missed in metadata"
-        assert response['ResponseMetadata']['HTTPHeaders']['content-type'], "'ContentType' missed in metadata"
+        assert response["ContentLength"] > 0, "'ContentLength' missed in metadata"
+        assert response["LastModified"], "'LastModified' missed in metadata"
+        assert response["ETag"], "'ETag' missed in metadata"
+        assert response["ContentType"], "'ContentType' missed in metadata"
 
 
     def test_get_object_size(self, s3_client, bucket_with_object):
