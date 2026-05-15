@@ -145,9 +145,11 @@ class TestS3ClientSmoke:
             bucket_with_object: fixture to create a bucket and upload an object
         """
         response = s3_client.write_object(bucket_with_object, OBJECT_KEY, CONTENT_DATA)
+        stored_content = s3_client.read_object(bucket_with_object, OBJECT_KEY)
 
         assert isinstance(response, dict), "Response must be of dictionary type"
         assert response['message'] == "Object written successfully", "Unsuccessful object write in response"
+        assert stored_content == CONTENT_DATA, "Written object content was not persisted correctly"
 
 
     def test_read_object(self, s3_client, bucket_with_object):
