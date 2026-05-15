@@ -24,8 +24,26 @@ def bucket_name(s3_client):
     """
     name = f"{BUCKET}-{uuid4().hex[:8]}"
     yield name
-    s3_client.delete_object(name, OBJECT_KEY)
-    s3_client.delete_bucket(name)
+
+    buckets_response = s3_client.list_buckets()
+    if "Buckets" not in buckets_response:
+        pytest.fail(f"Teardown could not verify bucket cleanup for '{name}': {buckets_response}")
+
+    bucket_exists = any(bucket["Name"] == name for bucket in buckets_response["Buckets"])
+    if not bucket_exists:
+        return
+
+    for obj in s3_client.list_objects(name):
+        delete_object_response = s3_client.delete_object(name, obj["key"])
+        if delete_object_response.get("message") != "Object deleted successfully":
+            pytest.fail(
+                f"Teardown failed to delete object '{obj['key']}' from bucket '{name}': "
+                f"{delete_object_response}"
+            )
+
+    delete_bucket_response = s3_client.delete_bucket(name)
+    if delete_bucket_response.get("message") != "Bucket deleted successfully":
+        pytest.fail(f"Teardown failed to delete bucket '{name}': {delete_bucket_response}")
 
 
 @pytest.fixture
