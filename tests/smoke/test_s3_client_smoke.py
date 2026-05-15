@@ -14,8 +14,6 @@ pytestmark = pytest.mark.smoke
 @pytest.fixture
 def s3_client(monkeypatch):
     monkeypatch.setattr(s3_client_module.settings, "s3_endpoint_url", BASE_URL)
-    monkeypatch.setattr(s3_client_module.settings, "aws_access_key_id", "minioadmin")
-    monkeypatch.setattr(s3_client_module.settings, "aws_secret_access_key", "minioadmin123")
     return S3Client()
 
 
