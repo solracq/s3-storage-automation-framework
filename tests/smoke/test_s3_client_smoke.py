@@ -2,7 +2,7 @@ import pytest
 
 from src.storage_automation import s3_client as s3_client_module
 from src.storage_automation.s3_client import S3Client
-from tests.utils.constants import BASE_URL, BUCKET, SECONDARY_BUCKET, OBJECT_KEY, CONTENT_DATA, FILE_PATH
+from tests.utils.constants import BASE_URL, BUCKET, OBJECT_KEY, CONTENT_DATA, FILE_PATH
 
 
 pytestmark = pytest.mark.smoke
@@ -142,7 +142,7 @@ class TestS3ClientSmoke:
         s3_client.write_object(BUCKET, OBJECT_KEY, CONTENT_DATA)
         response = s3_client.read_object(BUCKET, OBJECT_KEY)
         
-        assert response.decode("utf8") == CONTENT_DATA, "Unsuccessful object write in response"
+        assert response == CONTENT_DATA, "Unsuccessful object write in response"
 
         
     def test_delete_object(self, s3_client, create_bucket_with_object):
