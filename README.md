@@ -58,9 +58,22 @@ s3_storage_automation/
 │   ├── conftest.py
 │   ├── unit/
 │   ├── smoke/
-│   └── integration/
+│   ├── integration/
+│   ├── utils/
+|   |    ├── __init__.py
+│   |    └── constants.py
+│   └── data/
+|       ├── sample.txt
+|       ├── empty-sample.txt
+|       ├── large-sample.txt
+|       ├── non-ascii-sample.txt
+│       └── image.png
 ├── scripts/
 ├── docs/
+|   ├── Test_Plan_s3_storage.md
+|   ├── Test_Strategy_s3_storage.md
+|   ├── Exploratory_Testing.md
+│   └── postman_collection_s3-storage-testing.json
 ├── .env
 ├── .gitignore
 ├── docker-compose.yml
