@@ -57,7 +57,10 @@ s3_storage_automation/
 ├── tests/
 │   ├── conftest.py
 │   ├── unit/
+|   |    ├── test_s3_client.py
+│   |    └── test_S3_resource.py
 │   ├── smoke/
+|   |    └── test_s3_interface_smoke.py
 │   ├── integration/
 │   ├── utils/
 |   |    ├── __init__.py
