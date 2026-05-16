@@ -5,7 +5,7 @@ from src.storage_automation import s3_client as s3_client_module
 from src.storage_automation import s3_resource as s3_resource_module
 from src.storage_automation.s3_client import S3Client
 from src.storage_automation.s3_resource import S3Resource
-from tests.utils.constants import BASE_URL, BUCKET, SECONDARY_BUCKET, OBJECT_KEY, CONTENT_DATA, FILE_PATH
+from tests.utils.constants import BASE_URL, BUCKET, OBJECT_KEY, CONTENT_DATA, FILE_PATH
 
 
 pytestmark = pytest.mark.smoke
@@ -106,7 +106,7 @@ class TestS3InterfaceSmoke:
 
     def test_list_buckets(self, storage, existing_bucket):
         """
-        Validate listing of bucket(s) using S3 resource
+        Validate listing bucket(s)
         Args:
             storage: s3 storage (client or resource) object
             existing_bucket: unique bucket already created for the test
@@ -126,9 +126,11 @@ class TestS3InterfaceSmoke:
             existing_bucket: unique bucket already created for the test
         """
         response = storage.upload_object(existing_bucket, OBJECT_KEY, str(FILE_PATH))
+        stored_content = storage.read_object(existing_bucket, OBJECT_KEY)
 
         assert isinstance(response, dict), "Response must be of dictionary type"
         assert response['message'] == "Object uploaded successfully", "Unsuccessful object upload in response"
+        assert stored_content == FILE_PATH.read_bytes(), "Uploaded object content was not persisted correctly"
 
 
     def test_list_objects(self, storage, bucket_with_object):
