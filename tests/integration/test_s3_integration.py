@@ -2,7 +2,7 @@ import hashlib
 
 import pytest
 
-from tests.utils.constants import OBJECT_KEY, IMAGE_PATH
+from tests.utils.constants import OBJECT_KEY, IMAGE_PATH, EMPTY_FILE, EMPTY_FILE
 
 from tests.fixtures.s3_fixtures import (
     storage,
@@ -43,3 +43,24 @@ class TestS3Integration:
         assert download_response["message"] == "Object downloaded successfully", "Unsuccessful image download in response"
         assert download_path.exists(), "Downloaded image file was not created"
         assert original_checksum == downloaded_checksum, "Downloaded image checksum does not match original image checksum"
+
+
+    def test_delete_bucket_recursively_with_empty_file(self, storage, existing_bucket):
+        """
+        Validate recursive deletion of a bucket that contains an empty object
+        Args:
+            storage: s3 storage (client or resource) object
+            existing_bucket: unique bucket already created for the test
+        """
+        # Upload an empty object to a bucket
+        response = storage.upload_object(existing_bucket, OBJECT_KEY, str(EMPTY_FILE))
+        stored_content = storage.read_object(existing_bucket, OBJECT_KEY)
+
+        assert response['message'] == "Object uploaded successfully", "Unsuccessful object upload in response"
+        assert stored_content == EMPTY_FILE.read_bytes(), "Uploaded object content was not persisted correctly"
+
+        # Delete bucket
+        response = storage.delete_bucket_recursive(existing_bucket)
+        assert isinstance(response, dict), "Response must be of dictionary type"
+        assert response['message'] == "Bucket deleted successfully", "Unsuccessful bucket deletion in response"
+    
