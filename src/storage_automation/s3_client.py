@@ -94,6 +94,7 @@ class S3Client(S3):
             None
         """
         try:
+            logger.info("Creating bucket.")
             create_bucket_args = {"Bucket": bucket_name}
 
             if settings.aws_region and settings.aws_region != "us-east-1":
@@ -123,6 +124,7 @@ class S3Client(S3):
             None
         """
         try:
+            logger.info("Deleting bucket.")
             self.s3_client.delete_bucket(Bucket=bucket_name)
             return {"message": "Bucket deleted successfully"}
         except ClientError as error:
@@ -144,6 +146,7 @@ class S3Client(S3):
             versioning = self.s3_client.get_bucket_versioning(Bucket=bucket_name)
             versioning_status = versioning.get("Status")
 
+            logger.info("Emptying bucket before deletion.")
             if versioning_status in {"Enabled", "Suspended"}:
                 paginator = self.s3_client.get_paginator("list_object_versions")
                 for page in paginator.paginate(Bucket=bucket_name):
@@ -175,6 +178,7 @@ class S3Client(S3):
                             Delete={"Objects": objects_to_delete},
                         )
 
+            logger.info("Bucket is empty, let's delete it.")
             self.s3_client.delete_bucket(Bucket=bucket_name)
             return {"message": "Bucket deleted successfully"}
         except ClientError as error:
@@ -193,6 +197,7 @@ class S3Client(S3):
             None
         """
         try:
+            logger.info("Listing buckets.")
             return self.s3_client.list_buckets()
         except ClientError as error:
             logger.error(f"Bucket listing failed: {error}")
@@ -210,6 +215,7 @@ class S3Client(S3):
             None
         """
         try:
+            logger.info("Listing objects.")
             response = self.s3_client.list_objects_v2(Bucket=bucket_name)
             objects = response.get("Contents", [])
             return [
@@ -237,6 +243,7 @@ class S3Client(S3):
             None
         """
         try:
+            logger.info("Retrieving object metadata.")
             return self.s3_client.head_object(Bucket=bucket_name, Key=object_key)
         except ClientError as error:
             logger.error(f"Object metadata retrieval failed: {error}")
@@ -255,6 +262,7 @@ class S3Client(S3):
             None
         """
         try:
+            logger.info("Retrieving object size.")
             return self.s3_client.head_object(Bucket=bucket_name, Key=object_key)["ContentLength"]
         except ClientError as error:
             logger.error(f"Object size retrieval failed: {error}")
@@ -275,6 +283,7 @@ class S3Client(S3):
         """
         try:
             self.ensure_bucket_exists(bucket_name)
+            logger.info("Writing on object.")
             self.s3_client.put_object(Bucket=bucket_name, Key=object_key, Body=content)
             return {"message": "Object written successfully"}
         except (ClientError, RuntimeError) as error:
@@ -294,6 +303,7 @@ class S3Client(S3):
             None
         """
         try:
+            logger.info("Reading object.")
             return self.s3_client.get_object(Bucket=bucket_name, Key=object_key)["Body"].read()
         except ClientError as error:
             logger.error(f"Object reading failed: {error}")
@@ -312,6 +322,7 @@ class S3Client(S3):
             None
         """
         try:
+            logger.info("Deleting object.")
             self.s3_client.delete_object(Bucket=bucket_name, Key=object_key)
             return {"message": "Object deleted successfully",
                     "bucket_name": bucket_name,
@@ -336,6 +347,7 @@ class S3Client(S3):
         """
         try:
             self.ensure_bucket_exists(bucket_name)
+            logger.info(f"Uploading object to {bucket_name}.")
             self.s3_client.upload_file(file_path, bucket_name, object_key)
             return {"message": "Object uploaded successfully"}
         except (ClientError, RuntimeError, OSError) as error:
@@ -356,6 +368,7 @@ class S3Client(S3):
             None
         """
         try:
+            logger.info(f"Downloading object '{file_path}' from {bucket_name}.")
             self.s3_client.download_file(bucket_name, object_key, file_path)
             return {"message": "Object downloaded successfully"}
         except (ClientError, OSError) as error:
@@ -377,6 +390,7 @@ class S3Client(S3):
         """
         try:
             self.ensure_bucket_exists(self.bucket_name)
+            logger.info(f"Uploading object '{object_key}' to {self.bucket_name}.")
             self.s3_client.put_object(
                 Bucket=self.bucket_name,
                 Key=object_key,
@@ -405,6 +419,7 @@ class S3Client(S3):
             ClientError: If the object cannot be retrieved from storage.
         """
         try:
+            logger.info(f"Downloading object '{object_key}' from {self.bucket_name}.")
             response = self.s3_client.get_object(
                 Bucket=self.bucket_name,
                 Key=object_key,

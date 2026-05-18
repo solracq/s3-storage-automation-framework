@@ -100,7 +100,7 @@ class S3Resource(S3):
                 create_bucket_args["CreateBucketConfiguration"] = {
                     "LocationConstraint": settings.aws_region
                 }
-
+            logger.info("Creating bucket.")
             self.s3_resource.create_bucket(**create_bucket_args)
             return {"message": "Bucket created successfully"}
         except ClientError as error:
@@ -172,6 +172,7 @@ class S3Resource(S3):
             None
         """
         try:
+            logger.info("Listing buckets.")
             return self.s3_resource.meta.client.list_buckets()
         except ClientError as error:
             logger.error(f"Bucket listing failed: {error}")
@@ -189,6 +190,7 @@ class S3Resource(S3):
             None
         """
         try:
+            logger.info("Listing objects.")
             objects = self.s3_resource.Bucket(bucket_name).objects.all()
             return [
                 {
@@ -215,6 +217,7 @@ class S3Resource(S3):
             None
         """
         try:
+            logger.info("Retrieving object metadata.")
             return self.s3_resource.meta.client.head_object(Bucket=bucket_name, Key=object_key)
         except ClientError as error:
             logger.error(f"Object metadata retrieval failed: {error}")
@@ -233,6 +236,7 @@ class S3Resource(S3):
             None
         """
         try:
+            logger.info("Retrieving object size.")
             return self.s3_resource.meta.client.head_object(Bucket=bucket_name, Key=object_key)["ContentLength"]
         except ClientError as error:
             logger.error(f"Object size retrieval failed: {error}")
@@ -253,6 +257,7 @@ class S3Resource(S3):
         """
         try:
             self.ensure_bucket_exists(bucket_name)
+            logger.info("Writing on object.")
             self.s3_resource.Object(bucket_name, object_key).put(Body=content)
             return {"message": "Object written successfully"}
         except (ClientError, RuntimeError) as error:
@@ -272,6 +277,7 @@ class S3Resource(S3):
             None
         """
         try:
+            logger.info("Reading object.")
             return self.s3_resource.Object(bucket_name, object_key).get()["Body"].read()
         except ClientError as error:
             logger.error(f"Object reading failed: {error}")
@@ -290,6 +296,7 @@ class S3Resource(S3):
             None
         """
         try:
+            logger.info("Deleting object.")
             self.s3_resource.Object(bucket_name, object_key).delete()
             return {"message": "Object deleted successfully",
                     "bucket_name": bucket_name,
@@ -314,6 +321,7 @@ class S3Resource(S3):
         """
         try:
             self.ensure_bucket_exists(bucket_name)
+            logger.info(f"Uploading object to {bucket_name}.")
             self.s3_resource.Bucket(bucket_name).upload_file(file_path, object_key)
             return {"message": "Object uploaded successfully"}
         except (ClientError, RuntimeError, OSError) as error:
@@ -334,6 +342,7 @@ class S3Resource(S3):
             None
         """
         try:
+            logger.info(f"Downloading object '{file_path}' from {bucket_name}.")
             self.s3_resource.Bucket(bucket_name).download_file(object_key, file_path)
             return {"message": "Object downloaded successfully"}
         except (ClientError, OSError) as error:
