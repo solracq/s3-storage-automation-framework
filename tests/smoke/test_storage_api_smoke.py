@@ -2,9 +2,9 @@
 FastAPI wrapper smoke tests.
 
 These tests validate the HTTP service layer itself: route availability,
-basic response contracts, and the communication between the FastAPI wrapper and the
-underlying S3 implementation. This keeps API-service smoke coverage separate from 
-storage-behaivour smoke coverage.
+basic response contracts, and the communication between the FastAPI wrapper
+and the underlying S3 implementation. This keeps API-service smoke coverage
+separate from storage-behavior smoke coverage.
 """
 
 from uuid import uuid4
@@ -24,12 +24,12 @@ pytestmark = [pytest.mark.smoke, pytest.mark.api]
 @pytest.fixture
 def api_storage(monkeypatch):
     """
-    Fixture that patches the S3 endpoint and injects a fresh S3Client into main.py
-    Args:
-        monkeypatch: modify objects dictionaries
+    Patch the S3 endpoint and inject a fresh `S3Client` into `main.py`.
 
+    Args:
+        monkeypatch: Pytest fixture used to patch module attributes.
     Returns:
-        storage: s3 client object
+        S3Client: Fresh storage client instance used by the API layer.
     """
     monkeypatch.setattr(s3_client_module.settings, "s3_endpoint_url", BASE_URL)
     storage = S3Client()
@@ -40,12 +40,12 @@ def api_storage(monkeypatch):
 @pytest.fixture
 def api_client(api_storage):
     """
-    Fixture using TestClient
-    Args:
-        api_storage: s3 client object
+    Create a FastAPI test client for the storage API.
 
+    Args:
+        api_storage: Injected storage client for the API module.
     Returns:
-        Test Client
+        TestClient: Client used to send HTTP requests to the FastAPI app.
     """
     return TestClient(main_module.app)
 
@@ -53,12 +53,12 @@ def api_client(api_storage):
 @pytest.fixture
 def api_bucket_name(api_storage):
     """
-    Fisture to generate unique bucket name
-    Args:
-        api_storage: s3 client object
+    Generate a unique bucket name for API smoke tests and clean it up after use.
 
+    Args:
+        api_storage: Storage client used for post-test cleanup.
     Yields:
-        bucket unique name
+        str: Unique bucket name for the current test.
     """
     name = f"{BUCKET}-api-{uuid4().hex[:8]}"
     yield name
@@ -80,9 +80,10 @@ def api_bucket_name(api_storage):
 class TestStorageApiSmoke:
     def test_get_api_service_health(self, api_client):
         """
-        Validate the FastAPI health endpoint.
+        Validate the FastAPI health-check endpoint.
+
         Args:
-            api_client: API client object
+            api_client: FastAPI test client.
         """
         response = api_client.get("/health")
 
@@ -95,10 +96,11 @@ class TestStorageApiSmoke:
     def test_bucket_bootstrap(self, api_client, api_storage, api_bucket_name):
         """
         Validate bucket bootstrap through the FastAPI wrapper.
+
         Args:
-            api_client: API client object
-            api_storage: Fixture that patches the S3 endpoint and injects a fresh S3Client into main.py
-            api_bucket_name: unique API bucket name for the test
+            api_client: FastAPI test client.
+            api_storage: Storage client injected into the API module.
+            api_bucket_name: Unique bucket name for the current test.
         """
         response = api_client.post(
             "/buckets/bootstrap",
