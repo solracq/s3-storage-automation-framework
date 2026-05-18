@@ -1,6 +1,15 @@
+"""
+Storage implementation smoke tests.
+
+These tests validate the shared S3 behavior contract directly against the
+storage implementations (`S3Client` and `S3Resource`) without going through the
+FastAPI HTTP wrapper. This keeps storage-behavior smoke coverage separate from
+API-service smoke coverage.
+"""
+
 import pytest
 
-from tests.utils.constants import BASE_URL, BUCKET, OBJECT_KEY, CONTENT_DATA, FILE_PATH
+from tests.utils.constants import OBJECT_KEY, CONTENT_DATA, FILE_PATH
 
 from tests.fixtures.s3_fixtures import (
     storage,
