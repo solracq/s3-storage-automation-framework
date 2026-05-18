@@ -30,21 +30,41 @@ class TestS3InterfaceSmoke:
             storage: s3 storage (client or resource) object
             bucket_name: unique bucket name for the test
         """
+        # Create bucket
         response = storage.create_bucket(bucket_name)
 
         assert isinstance(response, dict), "Response must be of dictionary type"
         assert response['message'] == "Bucket created successfully", "Unsuccessful bucket creation in response"
 
 
-    def test_delete_bucket(self, storage, existing_bucket):
+    def test_delete_empty_bucket(self, storage, existing_bucket):
         """
-        Validate deletion of a bucket
+        Validate deletion of an empty bucket
         Args:
             storage: s3 storage (client or resource) object
             existing_bucket: unique bucket already created for the test
         """
+        # Delete emtpy bucket (no objects in bucket)
         response = storage.delete_bucket(existing_bucket)
 
+        assert isinstance(response, dict), "Response must be of dictionary type"
+        assert response['message'] == "Bucket deleted successfully", "Unsuccessful bucket deletion in response"
+
+    
+    def test_delete_bucket_with_objects(self, storage, bucket_with_object):
+        """
+        Validate deletion of a bucket that contains objects
+        Args:
+            storage: s3 storage (client or resource) object
+            bucket_with_object: fixture to create a bucket and upload an object
+        """
+        # Delete first objects in bucket
+        response = storage.delete_object(bucket_with_object, OBJECT_KEY)
+        assert response['message'] == "Object deleted successfully", "Unsuccessful object deletion in response"
+        assert response['object_key'] == OBJECT_KEY, "Deleted object_key not in response"
+
+        # Delete bucket with deleted objects
+        response = storage.delete_bucket(bucket_with_object)
         assert isinstance(response, dict), "Response must be of dictionary type"
         assert response['message'] == "Bucket deleted successfully", "Unsuccessful bucket deletion in response"
 
@@ -56,6 +76,7 @@ class TestS3InterfaceSmoke:
             storage: s3 storage (client or resource) object
             existing_bucket: unique bucket already created for the test
         """
+        # List buckets
         response = storage.list_buckets()
 
         assert isinstance(response, dict), "Response must be of dictionary type"
@@ -70,6 +91,7 @@ class TestS3InterfaceSmoke:
             storage: s3 storage (client or resource) object
             existing_bucket: unique bucket already created for the test
         """
+        # Upload an object / file to an existing bucket
         response = storage.upload_object(existing_bucket, OBJECT_KEY, str(FILE_PATH))
         stored_content = storage.read_object(existing_bucket, OBJECT_KEY)
 
@@ -85,6 +107,7 @@ class TestS3InterfaceSmoke:
             storage: s3 storage (client or resource) object
             bucket_with_object: fixture to create a bucket and upload an object
         """
+        # list objects in an existing bucket
         response = storage.list_objects(bucket_with_object)
 
         assert response[0]['key'] == OBJECT_KEY, "Object key is not available in response"
@@ -100,6 +123,7 @@ class TestS3InterfaceSmoke:
             bucket_with_object: fixture to create a bucket and upload an object
             tmp_path: pytest temporary directory for downloaded files
         """
+        # Download object in bucket
         download_path = tmp_path / OBJECT_KEY
         response = storage.download_object(bucket_with_object, OBJECT_KEY, str(download_path))
 
@@ -116,6 +140,7 @@ class TestS3InterfaceSmoke:
             storage: s3 storage (client or resource) object
             bucket_with_object: fixture to create a bucket and upload an object
         """
+        # Write to an existing object in a bucket
         response = storage.write_object(bucket_with_object, OBJECT_KEY, CONTENT_DATA)
         stored_content = storage.read_object(bucket_with_object, OBJECT_KEY)
 
@@ -131,6 +156,7 @@ class TestS3InterfaceSmoke:
             storage: s3 storage (client or resource) object
             bucket_with_object: fixture to create a bucket and upload an object
         """
+        # Read data in object
         storage.write_object(bucket_with_object, OBJECT_KEY, CONTENT_DATA)
         response = storage.read_object(bucket_with_object, OBJECT_KEY)
         
@@ -144,6 +170,7 @@ class TestS3InterfaceSmoke:
             storage: s3 storage (client or resource) object
             bucket_with_object: fixture to create a bucket and upload an object
         """
+        # Delete existing object in a bucket
         response = storage.delete_object(bucket_with_object, OBJECT_KEY)
 
         assert isinstance(response, dict), "Response must be of dictionary type"
@@ -159,6 +186,7 @@ class TestS3InterfaceSmoke:
             storage: s3 storage (client or resource) object
             bucket_with_object: fixture to create a bucket and upload an object
         """
+        # Obtain the object metadata in bucket
         response = storage.get_object_metadata(bucket_with_object, OBJECT_KEY)
     
         assert response["ContentLength"] > 0, "'ContentLength' missed in metadata"
@@ -174,6 +202,7 @@ class TestS3InterfaceSmoke:
             storage: s3 storage (client or resource) object
             bucket_with_object: fixture to create a bucket and upload an object
         """
+        # Obtain object size in bucket
         response = storage.get_object_size(bucket_with_object, OBJECT_KEY)
         
         assert response > 0, "Object size must be bigger than zero"
