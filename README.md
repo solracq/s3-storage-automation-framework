@@ -60,8 +60,11 @@ s3_storage_automation/
 |   |    ├── test_s3_client.py
 │   |    └── test_S3_resource.py
 │   ├── smoke/
+|   |    ├── test_storage_api_smoke.py
 |   |    └── test_s3_interface_smoke.py
 │   ├── integration/
+|   |    ├── test_s3_negative_integration.py
+|   |    └── test_s3_integration.py
 │   ├── utils/
 |   |    ├── __init__.py
 │   |    └── constants.py
