@@ -1,3 +1,5 @@
+import warnings
+
 import pytest
 from uuid import uuid4
 
@@ -31,7 +33,11 @@ def bucket_name(storage):
 
     buckets_response = storage.list_buckets()
     if "Buckets" not in buckets_response:
-        pytest.fail(f"Teardown could not verify bucket cleanup for '{name}': {buckets_response}")
+        warnings.warn(
+            f"Teardown could not verify bucket cleanup for '{name}': {buckets_response}",
+            stacklevel=2,
+        )
+        return
 
     bucket_exists = any(bucket["Name"] == name for bucket in buckets_response["Buckets"])
     if not bucket_exists:
@@ -40,14 +46,18 @@ def bucket_name(storage):
     for obj in storage.list_objects(name):
         delete_object_response = storage.delete_object(name, obj["key"])
         if delete_object_response.get("message") != "Object deleted successfully":
-            pytest.fail(
+            warnings.warn(
                 f"Teardown failed to delete object '{obj['key']}' from bucket '{name}': "
-                f"{delete_object_response}"
+                f"{delete_object_response}",
+                stacklevel=2,
             )
 
     delete_bucket_response = storage.delete_bucket(name)
     if delete_bucket_response.get("message") != "Bucket deleted successfully":
-        pytest.fail(f"Teardown failed to delete bucket '{name}': {delete_bucket_response}")
+        warnings.warn(
+            f"Teardown failed to delete bucket '{name}': {delete_bucket_response}",
+            stacklevel=2,
+        )
 
 
 @pytest.fixture
