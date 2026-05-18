@@ -20,6 +20,10 @@ class S3(ABC):
         pass
 
     @abstractmethod
+    def delete_bucket_recursive(self, bucket_name: str) -> dict:
+        pass
+
+    @abstractmethod
     def list_buckets(self) -> dict:
         pass
 

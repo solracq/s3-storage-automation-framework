@@ -128,6 +128,58 @@ class S3Client(S3):
         except ClientError as error:
             logger.error(f"Bucket deletion failed: {bucket_name}")
             return {"message": "Bucket deletion failed"}
+        
+    def delete_bucket_recursive(self, bucket_name: str) -> dict:
+        """
+        Delete a bucket after removing its contents.
+
+        Args:
+            bucket_name (str): Name of the bucket to delete.
+        Returns:
+            dict: Success or failure details for the delete operation.
+        Raises:
+            None
+        """
+        try:
+            versioning = self.s3_client.get_bucket_versioning(Bucket=bucket_name)
+            versioning_status = versioning.get("Status")
+
+            if versioning_status in {"Enabled", "Suspended"}:
+                paginator = self.s3_client.get_paginator("list_object_versions")
+                for page in paginator.paginate(Bucket=bucket_name):
+                    objects_to_delete = [
+                        {"Key": item["Key"], "VersionId": item["VersionId"]}
+                        for item in page.get("Versions", [])
+                    ]
+                    objects_to_delete.extend(
+                        {"Key": item["Key"], "VersionId": item["VersionId"]}
+                        for item in page.get("DeleteMarkers", [])
+                    )
+
+                    if objects_to_delete:
+                        self.s3_client.delete_objects(
+                            Bucket=bucket_name,
+                            Delete={"Objects": objects_to_delete},
+                        )
+            else:
+                paginator = self.s3_client.get_paginator("list_objects_v2")
+                for page in paginator.paginate(Bucket=bucket_name):
+                    objects_to_delete = [
+                        {"Key": item["Key"]}
+                        for item in page.get("Contents", [])
+                    ]
+
+                    if objects_to_delete:
+                        self.s3_client.delete_objects(
+                            Bucket=bucket_name,
+                            Delete={"Objects": objects_to_delete},
+                        )
+
+            self.s3_client.delete_bucket(Bucket=bucket_name)
+            return {"message": "Bucket deleted successfully"}
+        except ClientError as error:
+            logger.error(f"Bucket recursive deletion failed: {error}")
+            return {"message": "Bucket deletion failed"}
 
     def list_buckets(self) -> dict:
         """

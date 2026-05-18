@@ -130,6 +130,35 @@ class S3Resource(S3):
         except ClientError as error:
             logger.error(f"Bucket deletion failed: {error}")
             return {"message": "Bucket deletion failed"}
+    
+    def delete_bucket_recursive(self, bucket_name: str) -> dict:
+        """
+        Delete a bucket after removing its contents.
+
+        Args:
+            bucket_name (str): Name of the bucket to delete.
+        Returns:
+            dict: Success or failure details for the delete operation.
+        Raises:
+            None
+        """
+        try:
+            bucket = self.s3_resource.Bucket(bucket_name)
+            versioning_status = self.s3_resource.BucketVersioning(bucket_name).status
+
+            logger.info("Emptying bucket before deletion.")
+            if versioning_status in {"Enabled", "Suspended"}:
+                bucket.object_versions.delete()
+            else:
+                bucket.objects.all().delete() # Clearing the bucket before deletion for resource calls.
+
+            logger.info("Bucket is empty, let's delete it.")
+            bucket.delete()
+
+            return {"message": "Bucket deleted successfully"}
+        except ClientError as error:
+            logger.error(f"Bucket recursive deletion failed: {error}")
+            return {"message": "Bucket deletion failed"}
 
     def list_buckets(self) -> dict:
         """
