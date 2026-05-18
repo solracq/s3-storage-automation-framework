@@ -116,3 +116,40 @@ class TestStorageApiSmoke:
         assert any(
             bucket["Name"] == api_bucket_name for bucket in buckets_response["Buckets"]
         ), f"Bootstrapped bucket '{api_bucket_name}' was not created"
+
+    def test_bucket_bootstrap_idempotence(self, api_client, api_storage, api_bucket_name):
+        """
+        Validate that repeated bucket bootstrap calls are idempotent.
+
+        Args:
+            api_client: FastAPI test client.
+            api_storage: Storage client injected into the API module.
+            api_bucket_name: Unique bucket name for the current test.
+        """
+        first_response = api_client.post(
+            "/buckets/bootstrap",
+            params={"bucket_name": api_bucket_name},
+        )
+        second_response = api_client.post(
+            "/buckets/bootstrap",
+            params={"bucket_name": api_bucket_name},
+        )
+
+        first_body = first_response.json()
+        second_body = second_response.json()
+        buckets_response = api_storage.list_buckets()
+
+        assert first_response.status_code == 200, "First bootstrap call did not return HTTP 200"
+        assert second_response.status_code == 200, "Second bootstrap call did not return HTTP 200"
+        assert first_body["status"] == "ready", "First bootstrap call did not report ready status"
+        assert second_body["status"] == "ready", "Second bootstrap call did not report ready status"
+        assert "Buckets" in buckets_response, "Bucket list response missing 'Buckets' after bootstrap"
+
+        matching_buckets = [
+            bucket for bucket in buckets_response["Buckets"]
+            if bucket["Name"] == api_bucket_name
+        ]
+        assert len(matching_buckets) == 1, (
+            f"Bucket '{api_bucket_name}' should exist exactly once after repeated bootstrap calls"
+        )
+
