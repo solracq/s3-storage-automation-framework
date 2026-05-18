@@ -152,4 +152,3 @@ class TestStorageApiSmoke:
         assert len(matching_buckets) == 1, (
             f"Bucket '{api_bucket_name}' should exist exactly once after repeated bootstrap calls"
         )
-
