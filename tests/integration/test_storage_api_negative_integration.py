@@ -50,3 +50,22 @@ class TestStorageApiNegativeIntegration:
             error["loc"] == ["query", "bucket_name"] and error["type"] == "missing"
             for error in body["detail"]
         ), "Validation error did not identify the missing bucket_name query parameter"
+        
+
+    def test_upload_request_without_multipart_file_field(self, api_client):
+        """
+        Validate FastAPI rejects upload requests that omit the required multipart `file` field.
+
+        Args:
+            api_client: FastAPI test client.
+        """
+        # Send a POST request without the required multipart file field
+        response = api_client.post(f"/files/{EMPTY_FILE.name}")
+        body = response.json()
+
+        assert response.status_code == 422, "Missing multipart file field did not return HTTP 422"
+        assert "detail" in body, "Validation error response is missing the detail field"
+        assert any(
+            error["loc"] == ["body", "file"] and error["type"] == "missing"
+            for error in body["detail"]
+        ), "Validation error did not identify the missing multipart file field"
