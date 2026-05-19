@@ -50,7 +50,7 @@ class TestStorageApiNegativeIntegration:
             error["loc"] == ["query", "bucket_name"] and error["type"] == "missing"
             for error in body["detail"]
         ), "Validation error did not identify the missing bucket_name query parameter"
-        
+
 
     def test_upload_request_without_multipart_file_field(self, api_client):
         """
@@ -69,3 +69,25 @@ class TestStorageApiNegativeIntegration:
             error["loc"] == ["body", "file"] and error["type"] == "missing"
             for error in body["detail"]
         ), "Validation error did not identify the missing multipart file field"
+
+
+    def test_write_object_with_empty_data(self, api_client, api_bucket_name):
+        """
+        Validate FastAPI rejects write-object requests with an empty request body.
+
+        Args:
+            api_client: FastAPI test client.
+            api_bucket_name: Unique bucket name for the current test.
+        """
+        # Send a PUT request with the required bucket_name query parameter but no body content
+        response = api_client.put(
+            f"/objects/{EMPTY_FILE.name}",
+            params={"bucket_name": api_bucket_name},
+            content=b"",
+        )
+
+        assert response.status_code == 400, "Empty write-object request did not return HTTP 400"
+        assert response.json() == {
+            "detail": "Request body cannot be empty"
+        }, "Empty write-object response payload is incorrect"
+
