@@ -139,4 +139,3 @@ class TestS3NegativeIntegration:
             # Create bucket with invalid name
             storage.create_bucket(INVALID_BUCKET_NAME)
         assert "Invalid bucket name" in str(execinfo.value), "Invalid name shouldn't be created in response"
-
