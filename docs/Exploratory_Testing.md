@@ -450,6 +450,8 @@ INFO:    <client-ip>:<port> - "POST /files/large-sample.txt HTTP/1.1" 400 Bad Re
 ```
 
 #### Scenario 21: Upload an empty file to a bucket
+Note: This scenario requires two tests, one at the s3 implementation and other at the HTTP API level to show specific distinctive expected behaivour on each layer.
+
 **Pre-conditions:**
 - An existing bucket exist with the name "test-bucket"
 
