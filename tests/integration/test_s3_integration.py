@@ -2,7 +2,7 @@ import hashlib
 
 import pytest
 
-from tests.utils.constants import OBJECT_KEY, IMAGE_PATH, EMPTY_FILE, LARGE_FILE, NON_ASCII_FILE
+from tests.utils.constants import OBJECT_KEY, IMAGE_PATH, EMPTY_FILE, LARGE_FILE, NON_ASCII_FILE, FILE_PATH
 
 from tests.fixtures.s3_fixtures import (
     storage,
@@ -193,3 +193,70 @@ class TestS3Integration:
         assert read_response["message"] == "Object reading failed", (
             "Deleted object should not be readable after removal"
         )
+
+    def test_create_upload_list_download_compare_delete_file_lifecycle(self, storage, existing_bucket, tmp_path):
+        """
+        Validate create bucket, upload file, list object, download it, compare content,
+        then delete it and confirm removal.
+
+        Args:
+            storage: s3 storage (client or resource) object
+            existing_bucket: unique bucket already created for the test
+            tmp_path: pytest temporary directory for downloaded files
+        """
+        object_key = FILE_PATH.name
+        expected_content = FILE_PATH.read_bytes()
+
+        # Upload file
+        upload_response = storage.upload_object(existing_bucket, object_key, str(FILE_PATH))
+
+        # List objects and confirm the uploaded file appears
+        objects_after_upload = storage.list_objects(existing_bucket)
+
+        # Download file
+        download_path = tmp_path / object_key
+        download_response = storage.download_object(existing_bucket, object_key, str(download_path))
+
+        # Compare original and downloaded content
+        downloaded_content = download_path.read_bytes()
+
+        # Delete file
+        delete_response = storage.delete_object(existing_bucket, object_key)
+
+        # Confirm removal
+        objects_after_delete = storage.list_objects(existing_bucket)
+        read_after_delete = storage.read_object(existing_bucket, object_key)
+
+        assert isinstance(upload_response, dict), "Upload response must be of dictionary type"
+        assert upload_response["message"] == "Object uploaded successfully", (
+            "Unsuccessful file upload in response"
+        )
+
+        assert any(obj["key"] == object_key for obj in objects_after_upload), (
+            "Uploaded file is not listed in the bucket"
+        )
+
+        assert isinstance(download_response, dict), "Download response must be of dictionary type"
+        assert download_response["message"] == "Object downloaded successfully", (
+            "Unsuccessful file download in response"
+        )
+        assert download_path.exists(), "Downloaded file was not created"
+        assert downloaded_content == expected_content, (
+            "Downloaded file content does not match the uploaded file"
+        )
+
+        assert isinstance(delete_response, dict), "Delete response must be of dictionary type"
+        assert delete_response["message"] == "Object deleted successfully", (
+            "Unsuccessful file deletion in response"
+        )
+
+        assert all(obj["key"] != object_key for obj in objects_after_delete), (
+            "Deleted file is still listed in the bucket"
+        )
+        assert isinstance(read_after_delete, dict), (
+            "Reading a deleted file should return a failure response"
+        )
+        assert read_after_delete["message"] == "Object reading failed", (
+            "Deleted file should not be readable after removal"
+        )
+
