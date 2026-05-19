@@ -7,7 +7,9 @@ from app.storage_api import main as main_module
 from src.storage_automation import s3_client as s3_client_module
 from src.storage_automation.s3_client import S3Client
 from tests.utils.constants import BASE_URL, BUCKET
+import logging
 
+logger = logging.getLogger(__name__)
 
 @pytest.fixture
 def api_storage(monkeypatch):
@@ -21,6 +23,7 @@ def api_storage(monkeypatch):
     """
     monkeypatch.setattr(s3_client_module.settings, "s3_endpoint_url", BASE_URL)
     storage = S3Client()
+    logger.debug("Using '%s' implementation", storage)
     monkeypatch.setattr(main_module, "storage", storage)
     return storage
 
@@ -49,17 +52,22 @@ def api_bucket_name(api_storage):
         str: Unique bucket name for the current test.
     """
     name = f"{BUCKET}-api-{uuid4().hex[:8]}"
+    logger.debug("Generated bucket name, '%s'", name)
     yield name
 
     buckets_response = api_storage.list_buckets()
+    logger.debug("List buckets response, '%s'", buckets_response)
     if "Buckets" not in buckets_response:
         return
 
+    logger.debug("Checking if bucket exists in response, '%s'", buckets_response["Buckets"])
     bucket_exists = any(bucket["Name"] == name for bucket in buckets_response["Buckets"])
     if not bucket_exists:
         return
 
     for obj in api_storage.list_objects(name):
+        logger.debug("Deleting object '%s' with key '%s'", name, obj["key"])
         api_storage.delete_object(name, obj["key"])
 
+    logger.debug("Deleting bucket : %s", name)
     api_storage.delete_bucket(name)
