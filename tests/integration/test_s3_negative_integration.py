@@ -1,6 +1,6 @@
 import pytest
 
-from botocore import exceptions
+from botocore.exceptions import ParamValidationError
 
 from tests.utils.constants import OBJECT_KEY, INVALID_BUCKET_NAME, LARGE_FILE_SIZE_LIMIT_EXEEDED
 
@@ -135,7 +135,7 @@ class TestS3NegativeIntegration:
         Args:
             storage: s3 storage (client or resource) object
         """
-        with pytest.raises(exceptions.ParamValidationError) as execinfo:
+        with pytest.raises(ParamValidationError) as execinfo:
             # Create bucket with invalid name
             storage.create_bucket(INVALID_BUCKET_NAME)
         assert "Invalid bucket name" in str(execinfo.value), "Invalid name shouldn't be created in response"
