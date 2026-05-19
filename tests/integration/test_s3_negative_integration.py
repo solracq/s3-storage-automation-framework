@@ -30,3 +30,67 @@ class TestS3NegativeIntegration:
         
         assert response["bucket_name"] == existing_bucket, "Failure response should include the duplicate bucket name"
         assert "error" in response, "Failure response should include error details"
+
+    def test_get_list_of_buckets_when_no_buckets(self, storage):
+        """
+        Validate correct response when getting an emtpy list of buckets.
+
+        Args:
+            storage: s3 storage (client or resource) object
+        """
+        # List buckets
+        response = storage.list_buckets()
+
+        assert isinstance(response, dict), "Response must be of dictionary type"
+        assert "Buckets" in response, "'Buckets' string missing in response"
+        assert response["Buckets"] == [], f"List of buckets is not empty in response"
+
+    
+    def test_delete_already_deleted_bucket(self, storage, existing_bucket):
+        """
+        Validate deletion of a bucket that has been previously deleted
+        Args:
+            storage: s3 storage (client or resource) object
+            existing_bucket: unique bucket already created for the test
+        """
+        # Delete bucket
+        storage.delete_bucket(existing_bucket)
+
+        # Attempt to delete the same bucket again
+        response = storage.delete_bucket(existing_bucket)
+
+        assert isinstance(response, dict), "Response must be of dictionary type"
+        assert response['message'] == "Bucket deletion failed", "Deletion of a previously removed bucket succeeded or there was a problem in response"
+    
+
+    def test_delete_already_deleted_object_is_idempotent(self, storage, bucket_with_object):
+        """
+        Validate deletion of an object that has been previously deleted is idempotent
+        Args:
+            storage: s3 storage (client or resource) object
+            bucket_with_object: fixture to create a bucket and upload an object
+        """
+        # Delete existing object in a bucket
+        storage.delete_object(bucket_with_object, OBJECT_KEY)
+
+        # Attempt to delete the same object in the bucket
+        response = storage.delete_object(bucket_with_object, OBJECT_KEY)
+
+        assert isinstance(response, dict), "Response must be of dictionary type"
+        assert response['message'] == "Object deleted successfully", "Unsuccessful object deletion in response"
+        assert response['bucket_name'] == bucket_with_object, "Deleted bucket name not in response"
+        assert response['object_key'] == OBJECT_KEY, "Deleted object_key not in response"
+
+    
+    def test_delete_bucket_without_removing_its_objects(self, storage, bucket_with_object):
+        """
+        Validate correct response when attempting to delete a bucket without removing its objects
+        Args:
+            storage: s3 storage (client or resource) object
+            bucket_with_object: fixture to create a bucket and upload an object
+        """
+        # Attempt to delete bucket with object in it
+        response = storage.delete_bucket(bucket_with_object)
+
+        assert isinstance(response, dict), "Response must be of dictionary type"
+        assert response['message'] == "Bucket deletion failed", "Deletion of a bucket with objects succeeded or there was a problem in response"
