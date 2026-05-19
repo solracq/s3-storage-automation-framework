@@ -186,6 +186,7 @@ class TestS3Integration:
         assert isinstance(read_response, dict), "Deleted object read should return a failure response"
         assert read_response["message"] == "Object reading failed", "Deleted object should not be readable after removal"
 
+
     def test_create_upload_list_download_compare_delete_file_lifecycle(self, storage, existing_bucket, tmp_path):
         """
         Validate create bucket, upload file, list object, download it, compare content,
@@ -235,3 +236,22 @@ class TestS3Integration:
         assert all(obj["key"] != object_key for obj in objects_after_delete), "Deleted file is still listed in the bucket"
         assert isinstance(read_after_delete, dict), "Reading a deleted file should return a failure response"
         assert read_after_delete["message"] == "Object reading failed", "Deleted file should not be readable after removal"
+
+
+    def test_upload_empty_file_to_bucket_is_allowed(self, storage, existing_bucket):
+        """
+        Validate response correctness when uploading an empty file to a bucket.
+        Args:
+            storage: s3 storage (client or resource) object
+            existing_bucket: unique bucket already created for the test
+        """
+        # Upload an empty file to an existing bucket
+        response = storage.upload_object(existing_bucket, OBJECT_KEY, str(EMPTY_FILE))
+
+        # Read empty content
+        stored_content = storage.read_object(existing_bucket, OBJECT_KEY)
+
+        assert isinstance(response, dict), "Response must be of dictionary type"
+        assert response['message'] == "Object uploaded successfully", "Unsuccessful object upload in response"
+        assert stored_content == EMPTY_FILE.read_bytes(), "Uploaded object content was not persisted correctly"
+
