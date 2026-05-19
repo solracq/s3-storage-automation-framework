@@ -105,9 +105,7 @@ class TestS3Integration:
         assert isinstance(response, dict), "Response must be of dictionary type"
         assert response['message'] == "Object uploaded successfully", "Unsuccessful object upload in response"
         assert stored_content == expected_content, "Uploaded object content was not persisted correctly"
-        assert stored_content.decode("utf-8") == expected_text, (
-            "Unsuccessful object with non-ASCII characters in response"
-        )
+        assert stored_content.decode("utf-8") == expected_text, "Unsuccessful object with non-ASCII characters in response"
 
 
     def test_overwrite_existing_content_reads_new_content(self, storage, bucket_with_object):
@@ -151,13 +149,13 @@ class TestS3Integration:
         second_write = storage.write_object(existing_bucket, object_key, updated_content)
         second_size = storage.get_object_size(existing_bucket, object_key)
 
-        assert first_write["message"] == "Object written successfully"
-        assert first_size == len(initial_content)
+        assert first_write["message"] == "Object written successfully", "A problem ocurr wirting on the object"
+        assert first_size == len(initial_content), "File size and inital size content in file should match"
 
-        assert second_write["message"] == "Object written successfully"
-        assert second_size == len(updated_content)
+        assert second_write["message"] == "Object written successfully", "A problem ocurr wirting on the object"
+        assert second_size == len(updated_content), "File size and second size content in file should match"
         # Confirm object size changes afer overwriting the content of the object
-        assert second_size != first_size
+        assert second_size != first_size, "File sizes should differ as loading content size differ"
 
 
     def test_delete_object_then_confirm_removal(self, storage, bucket_with_object):
@@ -179,20 +177,14 @@ class TestS3Integration:
 
         # Confirm object has been deleted
         assert isinstance(delete_response, dict), "Delete response must be of dictionary type"
-        assert delete_response["message"] == "Object deleted successfully", (
-            "Unsuccessful object deletion in response"
-        )
+        assert delete_response["message"] == "Object deleted successfully", "Unsuccessful object deletion in response"
 
         # Confirm object is not present after deletion
-        assert all(obj["key"] != OBJECT_KEY for obj in objects_after_delete), (
-            "Deleted object is still listed in bucket contents"
-        )
+        assert all(obj["key"] != OBJECT_KEY for obj in objects_after_delete), "Deleted object is still listed in bucket contents"
 
         # Confirm object content cannot be read as it has been deleted
         assert isinstance(read_response, dict), "Deleted object read should return a failure response"
-        assert read_response["message"] == "Object reading failed", (
-            "Deleted object should not be readable after removal"
-        )
+        assert read_response["message"] == "Object reading failed", "Deleted object should not be readable after removal"
 
     def test_create_upload_list_download_compare_delete_file_lifecycle(self, storage, existing_bucket, tmp_path):
         """
@@ -228,35 +220,18 @@ class TestS3Integration:
         read_after_delete = storage.read_object(existing_bucket, object_key)
 
         assert isinstance(upload_response, dict), "Upload response must be of dictionary type"
-        assert upload_response["message"] == "Object uploaded successfully", (
-            "Unsuccessful file upload in response"
-        )
+        assert upload_response["message"] == "Object uploaded successfully", "Unsuccessful file upload in response"
 
-        assert any(obj["key"] == object_key for obj in objects_after_upload), (
-            "Uploaded file is not listed in the bucket"
-        )
+        assert any(obj["key"] == object_key for obj in objects_after_upload), "Uploaded file is not listed in the bucket"
 
         assert isinstance(download_response, dict), "Download response must be of dictionary type"
-        assert download_response["message"] == "Object downloaded successfully", (
-            "Unsuccessful file download in response"
-        )
+        assert download_response["message"] == "Object downloaded successfully", "Unsuccessful file download in response"
         assert download_path.exists(), "Downloaded file was not created"
-        assert downloaded_content == expected_content, (
-            "Downloaded file content does not match the uploaded file"
-        )
+        assert downloaded_content == expected_content, "Downloaded file content does not match the uploaded file"
 
         assert isinstance(delete_response, dict), "Delete response must be of dictionary type"
-        assert delete_response["message"] == "Object deleted successfully", (
-            "Unsuccessful file deletion in response"
-        )
+        assert delete_response["message"] == "Object deleted successfully", "Unsuccessful file deletion in response"
 
-        assert all(obj["key"] != object_key for obj in objects_after_delete), (
-            "Deleted file is still listed in the bucket"
-        )
-        assert isinstance(read_after_delete, dict), (
-            "Reading a deleted file should return a failure response"
-        )
-        assert read_after_delete["message"] == "Object reading failed", (
-            "Deleted file should not be readable after removal"
-        )
-
+        assert all(obj["key"] != object_key for obj in objects_after_delete), "Deleted file is still listed in the bucket"
+        assert isinstance(read_after_delete, dict), "Reading a deleted file should return a failure response"
+        assert read_after_delete["message"] == "Object reading failed", "Deleted file should not be readable after removal"
