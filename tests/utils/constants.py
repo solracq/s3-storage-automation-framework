@@ -8,6 +8,7 @@ TEST_ASSETS_DIR = ROOT_DIR / "tests" / "data"
 
 BUCKET = settings.minio_bucket_name
 SECONDARY_BUCKET = "test-bucket2"
+INVALID_BUCKET_NAME = "TEST-b@ck3t"
 OBJECT_KEY = "sample.txt"
 BASE_URL = os.getenv("S3_PUBLIC_ENDPOINT_URL", "http://127.0.0.1:9000")
 CONTENT_DATA = b"Hello from the write_object endpoint"
@@ -17,4 +18,3 @@ EMPTY_FILE = TEST_ASSETS_DIR / "empty-sample.txt"
 LARGE_FILE = TEST_ASSETS_DIR / "large-sample.txt"
 NON_ASCII_FILE = TEST_ASSETS_DIR / "non-ascii-sample.txt"
 LARGE_FILE_SIZE_LIMIT_EXEEDED = TEST_ASSETS_DIR / "large-sample-size-limit-exeeded"
-

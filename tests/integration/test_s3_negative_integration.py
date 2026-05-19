@@ -1,6 +1,8 @@
 import pytest
 
-from tests.utils.constants import BASE_URL, BUCKET, OBJECT_KEY, CONTENT_DATA, FILE_PATH, EMPTY_FILE, LARGE_FILE_SIZE_LIMIT_EXEEDED
+from botocore import exceptions
+
+from tests.utils.constants import OBJECT_KEY, INVALID_BUCKET_NAME, LARGE_FILE_SIZE_LIMIT_EXEEDED
 
 from tests.fixtures.s3_fixtures import (
     storage,
@@ -109,4 +111,32 @@ class TestS3NegativeIntegration:
         assert isinstance(response, dict), "Response must be of dictionary type"
         assert response['message'] == "Object upload failed", "Upload succeeded, user shouldn't be able to upload a large file that exceeds the (1 MB) limit."
 
+
+    def test_download_unexisting_object(self, storage, existing_bucket, tmp_path):
+        """
+        Validate downloading of an object that doesn't exist in bucket
+        Args:
+            storage: s3 storage (client or resource) object
+            existing_bucket: unique bucket already created for the test
+            tmp_path: pytest temporary directory for downloaded files
+        """
+        # Download object that doesn't exist from a bucket
+        download_path = tmp_path / OBJECT_KEY
+        response = storage.download_object(existing_bucket, OBJECT_KEY, str(download_path))
+
+        assert isinstance(response, dict), "Response must be of dictionary type"
+        assert response['message'] == "Object download failed", "Successful object download, download should've failed as no named object available in bucket"
+        assert not download_path.exists(), "Downloaded file was not created"
+
+
+    def test_create_bucket_with_invalid_name(self, storage):
+        """
+        Validate creation of a bucket
+        Args:
+            storage: s3 storage (client or resource) object
+        """
+        with pytest.raises(exceptions.ParamValidationError) as execinfo:
+            # Create bucket with invalid name
+            storage.create_bucket(INVALID_BUCKET_NAME)
+        assert "Invalid bucket name" in str(execinfo.value), "Invalid name shouldn't be created in response"
 
