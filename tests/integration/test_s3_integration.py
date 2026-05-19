@@ -2,7 +2,7 @@ import hashlib
 
 import pytest
 
-from tests.utils.constants import OBJECT_KEY, IMAGE_PATH, EMPTY_FILE, EMPTY_FILE
+from tests.utils.constants import OBJECT_KEY, IMAGE_PATH, EMPTY_FILE, LARGE_FILE, NON_ASCII_FILE
 
 from tests.fixtures.s3_fixtures import (
     storage,
@@ -63,4 +63,40 @@ class TestS3Integration:
         response = storage.delete_bucket_recursive(existing_bucket)
         assert isinstance(response, dict), "Response must be of dictionary type"
         assert response['message'] == "Bucket deleted successfully", "Unsuccessful bucket deletion in response"
-    
+
+
+    def test_upload_large_file_within_limit(self, storage, existing_bucket):
+        """
+        Validate uploading of object with max_part_size (allowed) = 1024 * 1024 (1 MB)
+        Args:
+            storage: s3 storage (client or resource) object
+            existing_bucket: unique bucket already created for the test
+        """
+        # Upload a large object to a bucket
+        response = storage.upload_object(existing_bucket, OBJECT_KEY, str(LARGE_FILE))
+        stored_content = storage.read_object(existing_bucket, OBJECT_KEY)
+
+        assert isinstance(response, dict), "Response must be of dictionary type"
+        assert response['message'] == "Object uploaded successfully", "Unsuccessful object upload in response"
+        assert stored_content == LARGE_FILE.read_bytes(), "Uploaded object content was not persisted correctly"
+
+
+    def test_upload_file_with_non_ascii_chars(self, storage, existing_bucket):
+        """
+        Validate uploading and reading an object containing non-ASCII characters.
+        Args:
+            storage: s3 storage (client or resource) object
+            existing_bucket: unique bucket already created for the test
+        """
+        # Upload a file containing non-ASCII characters
+        response = storage.upload_object(existing_bucket, OBJECT_KEY, str(NON_ASCII_FILE))
+        stored_content = storage.read_object(existing_bucket, OBJECT_KEY)
+        expected_content = NON_ASCII_FILE.read_bytes()
+        expected_text = NON_ASCII_FILE.read_text(encoding="utf-8")
+
+        assert isinstance(response, dict), "Response must be of dictionary type"
+        assert response['message'] == "Object uploaded successfully", "Unsuccessful object upload in response"
+        assert stored_content == expected_content, "Uploaded object content was not persisted correctly"
+        assert stored_content.decode("utf-8") == expected_text, (
+            "Unsuccessful object with non-ASCII characters in response"
+        )
