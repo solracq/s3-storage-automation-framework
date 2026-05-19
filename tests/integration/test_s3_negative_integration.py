@@ -1,6 +1,6 @@
 import pytest
 
-from tests.utils.constants import BASE_URL, BUCKET, OBJECT_KEY, CONTENT_DATA, FILE_PATH, IMAGE_PATH
+from tests.utils.constants import BASE_URL, BUCKET, OBJECT_KEY, CONTENT_DATA, FILE_PATH, EMPTY_FILE, LARGE_FILE_SIZE_LIMIT_EXEEDED
 
 from tests.fixtures.s3_fixtures import (
     storage,
@@ -94,3 +94,19 @@ class TestS3NegativeIntegration:
 
         assert isinstance(response, dict), "Response must be of dictionary type"
         assert response['message'] == "Bucket deletion failed", "Deletion of a bucket with objects succeeded or there was a problem in response"
+
+
+    def test_upload_large_file_exceeding_limit(self, storage, existing_bucket):
+        """
+        Validate uploading a file that exceeds the multipart size limit (1 MB)
+        Args:
+            storage: s3 storage (client or resource) object
+            existing_bucket: unique bucket already created for the test
+        """
+        # Upload a large object (over 1 MB) to a bucket
+        response = storage.upload_object(existing_bucket, OBJECT_KEY, str(LARGE_FILE_SIZE_LIMIT_EXEEDED))
+
+        assert isinstance(response, dict), "Response must be of dictionary type"
+        assert response['message'] == "Object upload failed", "Upload succeeded, user shouldn't be able to upload a large file that exceeds the (1 MB) limit."
+
+

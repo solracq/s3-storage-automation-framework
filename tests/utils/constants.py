@@ -16,3 +16,5 @@ IMAGE_PATH = TEST_ASSETS_DIR / "image.png"
 EMPTY_FILE = TEST_ASSETS_DIR / "empty-sample.txt"
 LARGE_FILE = TEST_ASSETS_DIR / "large-sample.txt"
 NON_ASCII_FILE = TEST_ASSETS_DIR / "non-ascii-sample.txt"
+LARGE_FILE_SIZE_LIMIT_EXEEDED = TEST_ASSETS_DIR / "large-sample-size-limit-exeeded"
+
