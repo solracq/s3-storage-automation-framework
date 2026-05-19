@@ -621,7 +621,7 @@ INFO:   <client-ip>:<port> - "GET /objects/non-ascii-sample.txt?bucket_name=test
 
 ### Integration Scenarios
 
-#### Scenario 29: Delete an empty bucket
+#### Scenario 29: Delete recursively a bucket with empty file
 ```text
 curl -X DELETE "http://localhost:8000/buckets/test-bucket2"
 ```
