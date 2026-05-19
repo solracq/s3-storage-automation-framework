@@ -63,18 +63,23 @@ s3_storage_automation/
 |   |    ├── test_storage_api_smoke.py
 |   |    └── test_s3_interface_smoke.py
 │   ├── integration/
+|   |    ├── test_s3_integration.py
 |   |    ├── test_s3_negative_integration.py
-|   |    └── test_s3_integration.py
+|   |    └── test_storage_api_negative_integration.py
 │   ├── utils/
 |   |    ├── __init__.py
 │   |    └── constants.py
+│   ├── fixtures/
+|   |    ├── __init__.py
+|   |    ├── api_fixtures.py
+│   |    └── s3_fixtures.py
 │   └── data/
-|       ├── sample.txt
 |       ├── empty-sample.txt
+|       ├── image.png
+|       ├── large-sample-size-limit-exeeded.txt
 |       ├── large-sample.txt
 |       ├── non-ascii-sample.txt
-│       └── image.png
-├── scripts/
+│       └── sample.txt
 ├── docs/
 |   ├── Test_Plan_s3_storage.md
 |   ├── Test_Strategy_s3_storage.md
@@ -84,7 +89,8 @@ s3_storage_automation/
 ├── .gitignore
 ├── docker-compose.yml
 ├── pytest.ini
-└── requirements.txt
+├── requirements.txt
+└── README.md
 ```
 
 ## Environment Setup
