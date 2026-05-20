@@ -122,13 +122,14 @@ Example:
 tests/data/
 ```
 
-Expected test asset files:
+**Supporting files (data) for Testing**
 ```text
-docs/Postman_collection_run_files/sample.txt
-docs/Postman_collection_run_files/empty-sample.txt
-docs/Postman_collection_run_files/large-sample.txt
-docs/Postman_collection_run_files/image.png
-docs/Postman_collection_run_files/non-ascii-sample.txt
+tests/data/sample.txt
+tests/data/empty-sample.txt
+tests/data/large-sample.txt
+tests/data/image.png
+tests/data/non-ascii-sample.txt
+tests/data/large-sample-size-limit-exeeded.txt
 ```
 
 ## API Endpoints
