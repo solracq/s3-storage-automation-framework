@@ -1,20 +1,23 @@
+import logging
 import pytest
 
 from botocore.exceptions import ParamValidationError
 
 from tests.utils.constants import (
-    OBJECT_KEY, 
-    INVALID_BUCKET_NAME, 
-    LARGE_FILE_SIZE_LIMIT_EXEEDED
-    )
-
-from tests.fixtures.s3_fixtures import (
-    storage,
-    bucket_name,
-    existing_bucket,
-    bucket_with_object,
+    INVALID_BUCKET_NAME,
+    LARGE_FILE_SIZE_LIMIT_EXEEDED,
+    OBJECT_KEY,
 )
 
+from tests.fixtures.s3_fixtures import (
+    bucket_name,
+    bucket_with_object,
+    existing_bucket,
+    storage,
+)
+
+
+logger = logging.getLogger(__name__)
 
 pytestmark = [pytest.mark.integration, pytest.mark.negative]
 
@@ -29,13 +32,16 @@ class TestS3NegativeIntegration:
             existing_bucket: unique bucket already created for the test
         """
         # Create a bucket using the name of an existing bucket
+        logger.debug("Attempting duplicate bucket creation for existing bucket '%s'", existing_bucket)
         response = storage.create_bucket(existing_bucket)
+        logger.debug("Duplicate bucket creation response: %s", response)
 
         assert isinstance(response, dict), "Response must be of dictionary type"
         assert response["message"] == "Bucket creation failed", "Creating a bucket with an existing name should fail"
         
         assert response["bucket_name"] == existing_bucket, "Failure response should include the duplicate bucket name"
         assert "error" in response, "Failure response should include error details"
+
 
     def test_get_list_of_buckets_when_no_buckets(self, storage):
         """
@@ -46,6 +52,7 @@ class TestS3NegativeIntegration:
         """
         # List buckets
         response = storage.list_buckets()
+        logger.debug("List buckets response when expecting no buckets: %s", response)
 
         assert isinstance(response, dict), "Response must be of dictionary type"
         assert "Buckets" in response, "'Buckets' string missing in response"
@@ -60,10 +67,14 @@ class TestS3NegativeIntegration:
             existing_bucket: unique bucket already created for the test
         """
         # Delete bucket
-        storage.delete_bucket(existing_bucket)
+        logger.debug("Deleting bucket '%s' for the first time", existing_bucket)
+        first_delete_response = storage.delete_bucket(existing_bucket)
+        logger.debug("First bucket deletion response: %s", first_delete_response)
 
         # Attempt to delete the same bucket again
+        logger.debug("Attempting to delete already deleted bucket '%s'", existing_bucket)
         response = storage.delete_bucket(existing_bucket)
+        logger.debug("Second bucket deletion response: %s", response)
 
         assert isinstance(response, dict), "Response must be of dictionary type"
         assert response['message'] == "Bucket deletion failed", "Deletion of a previously removed bucket succeeded or there was a problem in response"
@@ -77,10 +88,22 @@ class TestS3NegativeIntegration:
             bucket_with_object: fixture to create a bucket and upload an object
         """
         # Delete existing object in a bucket
-        storage.delete_object(bucket_with_object, OBJECT_KEY)
+        logger.debug(
+            "Deleting object '%s' from bucket '%s' for the first time",
+            OBJECT_KEY,
+            bucket_with_object,
+        )
+        first_delete_response = storage.delete_object(bucket_with_object, OBJECT_KEY)
+        logger.debug("First object deletion response: %s", first_delete_response)
 
         # Attempt to delete the same object in the bucket
+        logger.debug(
+            "Attempting idempotent delete for object '%s' in bucket '%s'",
+            OBJECT_KEY,
+            bucket_with_object,
+        )
         response = storage.delete_object(bucket_with_object, OBJECT_KEY)
+        logger.debug("Second object deletion response: %s", response)
 
         assert isinstance(response, dict), "Response must be of dictionary type"
         assert response['message'] == "Object deleted successfully", "Unsuccessful object deletion in response"
@@ -96,7 +119,9 @@ class TestS3NegativeIntegration:
             bucket_with_object: fixture to create a bucket and upload an object
         """
         # Attempt to delete bucket with object in it
+        logger.debug("Attempting to delete non-empty bucket '%s' without removing objects first", bucket_with_object)
         response = storage.delete_bucket(bucket_with_object)
+        logger.debug("Non-empty bucket deletion response: %s", response)
 
         assert isinstance(response, dict), "Response must be of dictionary type"
         assert response['message'] == "Bucket deletion failed", "Deletion of a bucket with objects succeeded or there was a problem in response"
@@ -110,7 +135,13 @@ class TestS3NegativeIntegration:
             existing_bucket: unique bucket already created for the test
         """
         # Upload a large object (over 1 MB) to a bucket
+        logger.debug(
+            "Attempting to upload oversized file '%s' to bucket '%s'",
+            LARGE_FILE_SIZE_LIMIT_EXEEDED.name,
+            existing_bucket,
+        )
         response = storage.upload_object(existing_bucket, OBJECT_KEY, str(LARGE_FILE_SIZE_LIMIT_EXEEDED))
+        logger.debug("Oversized file upload response: %s", response)
 
         assert isinstance(response, dict), "Response must be of dictionary type"
         assert response['message'] == "Object upload failed", "Upload succeeded, user shouldn't be able to upload a large file that exceeds the (1 MB) limit."
@@ -126,7 +157,14 @@ class TestS3NegativeIntegration:
         """
         # Download object that doesn't exist from a bucket
         download_path = tmp_path / OBJECT_KEY
+        logger.debug(
+            "Attempting to download missing object '%s' from bucket '%s' to '%s'",
+            OBJECT_KEY,
+            existing_bucket,
+            download_path,
+        )
         response = storage.download_object(existing_bucket, OBJECT_KEY, str(download_path))
+        logger.debug("Missing object download response: %s", response)
 
         assert isinstance(response, dict), "Response must be of dictionary type"
         assert response['message'] == "Object download failed", "Successful object download, download should've failed as no named object available in bucket"
@@ -139,7 +177,9 @@ class TestS3NegativeIntegration:
         Args:
             storage: s3 storage (client or resource) object
         """
+        logger.debug("Attempting to create bucket with invalid name '%s'", INVALID_BUCKET_NAME)
         with pytest.raises(ParamValidationError) as execinfo:
             # Create bucket with invalid name
             storage.create_bucket(INVALID_BUCKET_NAME)
+        logger.debug("Invalid bucket creation raised: %s", execinfo.value)
         assert "Invalid bucket name" in str(execinfo.value), "Invalid name shouldn't be created in response"
