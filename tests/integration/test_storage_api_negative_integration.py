@@ -5,11 +5,14 @@ These tests validate HTTP-layer error handling and request validation for the
 FastAPI wrapper.
 """
 
+import logging
 import pytest
 
 from tests.fixtures.api_fixtures import api_client, api_storage, api_bucket_name
 from tests.utils.constants import EMPTY_FILE
 
+
+logger = logging.getLogger(__name__)
 
 pytestmark = [pytest.mark.integration, pytest.mark.negative, pytest.mark.api]
 
@@ -23,11 +26,17 @@ class TestStorageApiNegativeIntegration:
             api_client: FastAPI test client.
         """
         # Send a POST request to upload an empty file
+        logger.debug("Calling POST /files/%s with an empty multipart file", EMPTY_FILE.name)
         with EMPTY_FILE.open("rb") as empty_file:
             response = api_client.post(
                 f"/files/{EMPTY_FILE.name}",
                 files={"file": (EMPTY_FILE.name, empty_file, "text/plain")},
             )
+        logger.debug(
+            "Empty file upload response: status=%s body=%s",
+            response.status_code,
+            response.json(),
+        )
 
         assert response.status_code == 400, "Empty file upload did not return HTTP 400"
         assert response.json() == {"detail": "File content cannot be empty"}, "Empty file upload response payload is incorrect"
@@ -41,8 +50,14 @@ class TestStorageApiNegativeIntegration:
             api_client: FastAPI test client.
         """
         # Send GET request without the required bucket_name query parameter
+        logger.debug("Calling GET /files without the required bucket_name query parameter")
         response = api_client.get("/files")
         body = response.json()
+        logger.debug(
+            "Missing bucket_name response: status=%s body=%s",
+            response.status_code,
+            body,
+        )
 
         assert response.status_code == 422, "Missing bucket_name did not return HTTP 422"
         assert "detail" in body, "Validation error response is missing the detail field"
@@ -60,8 +75,14 @@ class TestStorageApiNegativeIntegration:
             api_client: FastAPI test client.
         """
         # Send a POST request without the required multipart file field
+        logger.debug("Calling POST /files/%s without the multipart file field", EMPTY_FILE.name)
         response = api_client.post(f"/files/{EMPTY_FILE.name}")
         body = response.json()
+        logger.debug(
+            "Missing multipart file field response: status=%s body=%s",
+            response.status_code,
+            body,
+        )
 
         assert response.status_code == 422, "Missing multipart file field did not return HTTP 422"
         assert "detail" in body, "Validation error response is missing the detail field"
@@ -80,14 +101,23 @@ class TestStorageApiNegativeIntegration:
             api_bucket_name: Unique bucket name for the current test.
         """
         # Send a PUT request with the required bucket_name query parameter but no body content
+        logger.debug(
+            "Calling PUT /objects/%s with bucket_name=%s and an empty request body",
+            EMPTY_FILE.name,
+            api_bucket_name,
+        )
         response = api_client.put(
             f"/objects/{EMPTY_FILE.name}",
             params={"bucket_name": api_bucket_name},
             content=b"",
+        )
+        logger.debug(
+            "Empty write-object response: status=%s body=%s",
+            response.status_code,
+            response.json(),
         )
 
         assert response.status_code == 400, "Empty write-object request did not return HTTP 400"
         assert response.json() == {
             "detail": "Request body cannot be empty"
         }, "Empty write-object response payload is incorrect"
-
