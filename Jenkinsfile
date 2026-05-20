@@ -1,19 +1,21 @@
 pipeline {
     agent any
 
+    // Set job behavior
     options {
         disableConcurrentBuilds()
         timestamps()
         buildDiscarder(logRotator(numToKeepStr: '20'))
     }
 
+    // Shared environment values
     environment {
         BASE_PATH = '/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin'
         VENV_DIR = '.venv'
         REPORT_DIR = 'reports'
         JUNIT_DIR = 'reports/junit'
         PYTEST_LOG_ROOT = 'reports/logs'
-        COMPOSE_PROJECT_NAME = "s3-ci-${BUILD_NUMBER}"
+        COMPOSE_PROJECT_NAME = "s3-ci-${BUILD_NUMBER}" // Isolates Docker resources by build number 
         MINIO_API_HOST_PORT = '19000'
         MINIO_CONSOLE_HOST_PORT = '19001'
         STORAGE_API_HOST_PORT = '18000'
@@ -28,6 +30,7 @@ pipeline {
 
                     mkdir -p "${REPORT_DIR}" "${JUNIT_DIR}" "${PYTEST_LOG_ROOT}" "${REPORT_DIR}/artifacts"
 
+                    // build a CI-specific .env
                     minio_user="${MINIO_ROOT_USER:-minioadmin}"
                     minio_password="${MINIO_ROOT_PASSWORD:-minioadmin123}"
                     aws_key="${AWS_ACCESS_KEY_ID:-$minio_user}"
@@ -37,6 +40,7 @@ pipeline {
                     public_s3_endpoint="${S3_PUBLIC_ENDPOINT_URL:-http://127.0.0.1:${MINIO_API_HOST_PORT}}"
                     internal_s3_endpoint="${S3_ENDPOINT_URL:-http://minio:9000}"
 
+                    // Create .venv
                     cat > .env <<EOF
 MINIO_ROOT_USER=${minio_user}
 MINIO_ROOT_PASSWORD=${minio_password}
@@ -50,12 +54,15 @@ MINIO_API_HOST_PORT=${MINIO_API_HOST_PORT}
 MINIO_CONSOLE_HOST_PORT=${MINIO_CONSOLE_HOST_PORT}
 STORAGE_API_HOST_PORT=${STORAGE_API_HOST_PORT}
 EOF
-
+                    // Install Python dependencies
                     python3 -m venv "${VENV_DIR}"
                     "${VENV_DIR}/bin/python" -m pip install --upgrade pip
                     "${VENV_DIR}/bin/pip" install -r requirements.txt
 
+                    // Validates Compose config
                     docker compose config >/dev/null
+
+                    // Builds the 'storage-api' docker image
                     docker compose build storage-api
                 '''
             }
@@ -89,9 +96,12 @@ EOF
 
                         mkdir -p "${PYTEST_LOG_ROOT}/smoke"
 
+                        // Teardown existing services
                         docker compose down -v --remove-orphans || true
+                        // Start a fresh MinIO stack
                         docker compose up -d minio
 
+                        // Wait for health endpoint then runs
                         for attempt in $(seq 1 30); do
                             if curl -fsS "http://127.0.0.1:${MINIO_API_HOST_PORT}/minio/health/live" >/dev/null; then
                                 break
@@ -168,6 +178,7 @@ EOF
             sh '''
                 set +e
                 export PATH="${BASE_PATH}:$PATH"
+                // Run even if tests fail. This keeps local Jenkins box clean between runs.
                 docker compose down -v --remove-orphans
             '''
         }
