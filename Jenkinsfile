@@ -204,7 +204,7 @@ EOF
                     reportName: 'S3_Test_Summary'
                 ])
                 script {
-                    # This avoids needing manual approvals every time. 
+                    // This avoids needing manual approvals every time.
                     currentBuild.description = readFile(
                         "${REPORT_DIR}/artifacts/build-description.txt"
                     ).trim()
