@@ -84,7 +84,15 @@ s3_storage_automation/
 |   ├── Test_Plan_s3_storage.md
 |   ├── Test_Strategy_s3_storage.md
 |   ├── Exploratory_Testing.md
+|   ├── Jenkins_Local_Setup.md
 │   └── postman_collection_s3-storage-testing.json
+├── scripts/
+|   └── generate_jenkins_test_report.py
+├── reports/    -> Generated when building and running tests through Jenkins
+|   ├── artifacts/  -> Test summary and metrics
+|   ├── html/    -> HTML report
+|   ├── junit/   -> XML tests results
+│   └── logs/    -> Unit / Smoke / Regression run logs
 ├── .env
 ├── .gitignore
 ├── docker-compose.yml
