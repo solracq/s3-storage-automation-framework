@@ -21,7 +21,11 @@ logger = logging.getLogger(__name__)
 )
 def storage(request, monkeypatch):
     _, module, s3_cls = request.param
-    logger.debug("Selected '%s' implementation with module '%s'", s3_cls, module)
+    logger.debug(
+        "[setup] Selected storage implementation '%s' from module '%s'",
+        s3_cls.__name__,
+        module.__name__,
+    )
     monkeypatch.setattr(module.settings, "s3_endpoint_url", BASE_URL)
     return s3_cls()
 
@@ -32,11 +36,11 @@ def bucket_name(storage):
     Provide a unique bucket name per test and always attempt cleanup.
     """
     name = f"{BUCKET}-{uuid4().hex[:8]}"
-    logger.debug("Generated bucket name, '%s'", name)
+    logger.debug("[setup] Generated bucket name '%s'", name)
     yield name
 
     buckets_response = storage.list_buckets()
-    logger.debug("List buckets response, '%s'", buckets_response)
+    logger.debug("[teardown] Bucket list response: %s", buckets_response)
     if "Buckets" not in buckets_response:
         warnings.warn(
             f"Teardown could not verify bucket cleanup for '{name}': {buckets_response}",
@@ -44,15 +48,19 @@ def bucket_name(storage):
         )
         return
 
-    logger.debug("Checking if bucket exists in response, '%s'", buckets_response["Buckets"])
+    logger.debug("[teardown] Checking whether bucket '%s' still exists", name)
     bucket_exists = any(bucket["Name"] == name for bucket in buckets_response["Buckets"])
     if not bucket_exists:
         return
 
     for obj in storage.list_objects(name):
-        logger.debug("Objects found. Deleteting object")
+        logger.debug(
+            "[teardown] Deleting object '%s' from bucket '%s'",
+            obj["key"],
+            name,
+        )
         delete_object_response = storage.delete_object(name, obj["key"])
-        logger.debug("Object deletion response : %s", delete_object_response)
+        logger.debug("[teardown] Object deletion response: %s", delete_object_response)
         if delete_object_response.get("message") != "Object deleted successfully":
             warnings.warn(
                 f"Teardown failed to delete object '{obj['key']}' from bucket '{name}': "
@@ -61,7 +69,7 @@ def bucket_name(storage):
             )
 
     delete_bucket_response = storage.delete_bucket(name)
-    logger.debug("Bucket deletion response : %s", delete_bucket_response)
+    logger.debug("[teardown] Bucket deletion response: %s", delete_bucket_response)
     if delete_bucket_response.get("message") != "Bucket deleted successfully":
         warnings.warn(
             f"Teardown failed to delete bucket '{name}': {delete_bucket_response}",
@@ -74,9 +82,9 @@ def existing_bucket(storage, bucket_name):
     """
     Create a bucket for tests that need an existing bucket.
     """
-    logger.debug("Creating bucket '%s'", existing_bucket)
+    logger.debug("[setup] Creating bucket '%s'", bucket_name)
     response = storage.create_bucket(bucket_name)
-    logger.debug("Create response: %s", response)
+    logger.debug("[setup] Create bucket response: %s", response)
     assert response["message"] == "Bucket created successfully"
     return bucket_name
 
@@ -86,8 +94,12 @@ def bucket_with_object(storage, existing_bucket):
     """
     Create a bucket and upload a fixture object for object-level smoke tests.
     """
-    logger.debug("Uploading object '%s' to bucket '%s'", OBJECT_KEY, existing_bucket)
+    logger.debug(
+        "[setup] Uploading fixture object '%s' to bucket '%s'",
+        OBJECT_KEY,
+        existing_bucket,
+    )
     response = storage.upload_object(existing_bucket, OBJECT_KEY, str(FILE_PATH))
-    logger.debug("Upload response: %s", response)
+    logger.debug("[setup] Upload object response: %s", response)
     assert response["message"] == "Object uploaded successfully"
     return existing_bucket

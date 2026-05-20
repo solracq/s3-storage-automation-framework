@@ -23,7 +23,10 @@ def api_storage(monkeypatch):
     """
     monkeypatch.setattr(s3_client_module.settings, "s3_endpoint_url", BASE_URL)
     storage = S3Client()
-    logger.debug("Using '%s' implementation", storage)
+    logger.debug(
+        "[setup] Using API storage implementation '%s'",
+        type(storage).__name__,
+    )
     monkeypatch.setattr(main_module, "storage", storage)
     return storage
 
@@ -52,22 +55,26 @@ def api_bucket_name(api_storage):
         str: Unique bucket name for the current test.
     """
     name = f"{BUCKET}-api-{uuid4().hex[:8]}"
-    logger.debug("Generated bucket name, '%s'", name)
+    logger.debug("[setup] Generated API bucket name '%s'", name)
     yield name
 
     buckets_response = api_storage.list_buckets()
-    logger.debug("List buckets response, '%s'", buckets_response)
+    logger.debug("[teardown] API bucket list response: %s", buckets_response)
     if "Buckets" not in buckets_response:
         return
 
-    logger.debug("Checking if bucket exists in response, '%s'", buckets_response["Buckets"])
+    logger.debug("[teardown] Checking whether API bucket '%s' still exists", name)
     bucket_exists = any(bucket["Name"] == name for bucket in buckets_response["Buckets"])
     if not bucket_exists:
         return
 
     for obj in api_storage.list_objects(name):
-        logger.debug("Deleting object '%s' with key '%s'", name, obj["key"])
+        logger.debug(
+            "[teardown] Deleting object '%s' from API bucket '%s'",
+            obj["key"],
+            name,
+        )
         api_storage.delete_object(name, obj["key"])
 
-    logger.debug("Deleting bucket : %s", name)
+    logger.debug("[teardown] Deleting API bucket '%s'", name)
     api_storage.delete_bucket(name)
