@@ -27,14 +27,14 @@ def resource_instance(monkeypatch):
 
 def test_delete_bucket_uses_object_versions_when_versioning_is_enabled(resource_instance):
     """
-    Example of testing a branch that only exists in the resource implementation.
+    Validate recursive bucket deletion when versioning is enabled.
     """
     s3_resource, sdk_resource = resource_instance
     bucket = MagicMock()
     sdk_resource.Bucket.return_value = bucket
     sdk_resource.BucketVersioning.return_value.status = "Enabled"
 
-    result = s3_resource.delete_bucket("versioned-bucket")
+    result = s3_resource.delete_bucket_recursive("versioned-bucket")
 
     assert result == {"message": "Bucket deleted successfully"}
     bucket.object_versions.delete.assert_called_once_with()
@@ -44,7 +44,7 @@ def test_delete_bucket_uses_object_versions_when_versioning_is_enabled(resource_
 
 def test_delete_bucket_uses_object_listing_when_versioning_is_not_enabled(resource_instance):
     """
-    Example of checking the alternate cleanup branch before bucket deletion.
+    Validate recursive bucket deletion when object versioning is not enabled.
     """
     s3_resource, sdk_resource = resource_instance
     bucket = MagicMock()
@@ -53,7 +53,7 @@ def test_delete_bucket_uses_object_listing_when_versioning_is_not_enabled(resour
     sdk_resource.Bucket.return_value = bucket
     sdk_resource.BucketVersioning.return_value.status = None
 
-    result = s3_resource.delete_bucket("plain-bucket")
+    result = s3_resource.delete_bucket_recursive("plain-bucket")
 
     assert result == {"message": "Bucket deleted successfully"}
     bucket.objects.all.assert_called_once_with()
