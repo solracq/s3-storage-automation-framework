@@ -135,3 +135,25 @@ nohup java -jar "$HOME/jenkins-local/war/jenkins.war" --httpPort=8080 \
 echo $! > "$HOME/jenkins-local/jenkins.pid"
 ```
 
+**How to kill Jenkins when it hangs or becomes unresponsive**
+```bash
+pkill -TERM -f 'jenkins.war'
+pkill -TERM -f 'git fetch'
+pkill -TERM -f 'ssh .*github.com'
+
+sleep 2
+
+pkill -KILL -f 'jenkins.war'
+pkill -KILL -f 'git fetch'
+pkill -KILL -f 'ssh .*github.com'
+```
+
+Then, re-start it.
+```bash
+kill "$(cat "$HOME/jenkins-local/jenkins.pid")"
+
+export JENKINS_HOME="$HOME/jenkins-local/home"
+nohup java -jar "$HOME/jenkins-local/war/jenkins.war" --httpPort=8080 \
+  > "$HOME/jenkins-local/logs/jenkins.out" 2>&1 &
+echo $! > "$HOME/jenkins-local/jenkins.pid"
+```
