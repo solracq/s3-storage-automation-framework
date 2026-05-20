@@ -1,22 +1,32 @@
 import hashlib
+import logging
 
 import pytest
 
-from tests.utils.constants import OBJECT_KEY, IMAGE_PATH, EMPTY_FILE, LARGE_FILE, NON_ASCII_FILE, FILE_PATH
-
-from tests.fixtures.s3_fixtures import (
-    storage,
-    bucket_name,
-    existing_bucket,
-    bucket_with_object,
+from tests.utils.constants import (
+    EMPTY_FILE,
+    FILE_PATH,
+    IMAGE_PATH,
+    LARGE_FILE,
+    NEW_CONTENT,
+    NON_ASCII_FILE,
+    OBJECT_KEY,
 )
 
+from tests.fixtures.s3_fixtures import (
+    bucket_name,
+    bucket_with_object,
+    existing_bucket,
+    storage,
+)
+
+logger = logging.getLogger(__name__)
 
 pytestmark = pytest.mark.integration
 
 
 class TestS3Integration:
-    def test_upload_download_image_compare_checksums(self, storage, bucket_name, existing_bucket, tmp_path):
+    def test_upload_download_image_compare_checksums(self, storage, existing_bucket, tmp_path):
         """
         Validate upload/download integrity for an image using SHA-256 checksums.
 
@@ -26,23 +36,43 @@ class TestS3Integration:
             tmp_path: pytest temporary directory for downloaded files
         """
         image_object_key = IMAGE_PATH.name
+        expected_content = IMAGE_PATH.read_bytes()
 
         # Upload an image to a bucket
+        logger.debug(
+            "Uploading image '%s' (%s bytes) to bucket '%s'",
+            image_object_key,
+            len(expected_content),
+            existing_bucket,
+        )
         upload_response = storage.upload_object(existing_bucket, image_object_key, str(IMAGE_PATH))
-        # Read content in bucket
+        logger.debug("Upload response: %s", upload_response)
         stored_content = storage.read_object(existing_bucket, image_object_key)
+        logger.debug("Stored image content length: %s bytes", len(stored_content))
 
         download_path = tmp_path / image_object_key
         # Download image
+        logger.debug(
+            "Downloading image '%s' from bucket '%s' to '%s'",
+            image_object_key,
+            existing_bucket,
+            download_path,
+        )
         download_response = storage.download_object(existing_bucket, image_object_key, str(download_path))
+        logger.debug("Download response: %s", download_response)
 
-        # Compare original and downlaoded checksums
-        original_checksum = hashlib.sha256(IMAGE_PATH.read_bytes()).hexdigest()
+        # Compare original and downloaded checksums
+        original_checksum = hashlib.sha256(expected_content).hexdigest()
         downloaded_checksum = hashlib.sha256(download_path.read_bytes()).hexdigest()
-
+        logger.debug(
+            "Comparing original and downloaded checksums for '%s': original=%s downloaded=%s",
+            image_object_key,
+            original_checksum,
+            downloaded_checksum,
+        )
         assert isinstance(upload_response, dict), "Upload response must be of dictionary type"
         assert upload_response["message"] == "Object uploaded successfully", "Unsuccessful image upload in response"
-        assert stored_content == IMAGE_PATH.read_bytes(), "Stored image content does not match source image"
+        assert stored_content == expected_content, "Stored image content does not match source image"
         assert isinstance(download_response, dict), "Download response must be of dictionary type"
         assert download_response["message"] == "Object downloaded successfully", "Unsuccessful image download in response"
         assert download_path.exists(), "Downloaded image file was not created"
@@ -57,14 +87,24 @@ class TestS3Integration:
             existing_bucket: unique bucket already created for the test
         """
         # Upload an empty object to a bucket
+        logger.debug(
+            "Uploading empty file '%s' as object '%s' to bucket '%s'",
+            EMPTY_FILE.name,
+            OBJECT_KEY,
+            existing_bucket,
+        )
         response = storage.upload_object(existing_bucket, OBJECT_KEY, str(EMPTY_FILE))
+        logger.debug("Upload response: %s", response)
         stored_content = storage.read_object(existing_bucket, OBJECT_KEY)
+        logger.debug("Stored empty object length: %s bytes", len(stored_content))
 
         assert response['message'] == "Object uploaded successfully", "Unsuccessful object upload in response"
         assert stored_content == EMPTY_FILE.read_bytes(), "Uploaded object content was not persisted correctly"
 
         # Delete bucket recursively, delete first objects then delete bucket
+        logger.debug("Recursively deleting bucket '%s'", existing_bucket)
         response = storage.delete_bucket_recursive(existing_bucket)
+        logger.debug("Bucket deletion response: %s", response)
         assert isinstance(response, dict), "Response must be of dictionary type"
         assert response['message'] == "Bucket deleted successfully", "Unsuccessful bucket deletion in response"
 
@@ -77,10 +117,18 @@ class TestS3Integration:
             existing_bucket: unique bucket already created for the test
         """
         # Upload a large object to a bucket
+        logger.debug(
+            "Uploading large file '%s' (%s bytes) to bucket '%s'",
+            LARGE_FILE.name,
+            LARGE_FILE.stat().st_size,
+            existing_bucket,
+        )
         response = storage.upload_object(existing_bucket, OBJECT_KEY, str(LARGE_FILE))
+        logger.debug("Upload response: %s", response)
 
         # Read contents of bucket
         stored_content = storage.read_object(existing_bucket, OBJECT_KEY)
+        logger.debug("Stored large object length: %s bytes", len(stored_content))
 
         assert isinstance(response, dict), "Response must be of dictionary type"
         assert response['message'] == "Object uploaded successfully", "Unsuccessful object upload in response"
@@ -95,12 +143,25 @@ class TestS3Integration:
             existing_bucket: unique bucket already created for the test
         """
         # Upload a file containing non-ASCII characters
+        logger.debug(
+            "Uploading non-ASCII file '%s' (%s bytes) to bucket '%s'",
+            NON_ASCII_FILE.name,
+            NON_ASCII_FILE.stat().st_size,
+            existing_bucket,
+        )
         response = storage.upload_object(existing_bucket, OBJECT_KEY, str(NON_ASCII_FILE))
+        logger.debug("Upload response: %s", response)
 
         # Reading content in bucket
         stored_content = storage.read_object(existing_bucket, OBJECT_KEY)
         expected_content = NON_ASCII_FILE.read_bytes()
         expected_text = NON_ASCII_FILE.read_text(encoding="utf-8")
+        logger.debug(
+            "Comparing non-ASCII object '%s': byte_length=%s char_length=%s",
+            OBJECT_KEY,
+            len(stored_content),
+            len(expected_text),
+        )
 
         assert isinstance(response, dict), "Response must be of dictionary type"
         assert response['message'] == "Object uploaded successfully", "Unsuccessful object upload in response"
@@ -120,9 +181,17 @@ class TestS3Integration:
         existing_stored_content = storage.read_object(bucket_with_object, OBJECT_KEY)
 
         # Overwrite an existing content in an object
-        new_content = "New data added"
-        response = storage.write_object(bucket_with_object, OBJECT_KEY, new_content)
+        logger.debug(
+            "Overwriting object '%s' in bucket '%s': old_length=%s new_length=%s",
+            OBJECT_KEY,
+            bucket_with_object,
+            len(existing_stored_content),
+            len(NEW_CONTENT),
+        )
+        response = storage.write_object(bucket_with_object, OBJECT_KEY, NEW_CONTENT)
+        logger.debug("Write response: %s", response)
         new_stored_content = storage.read_object(bucket_with_object, OBJECT_KEY)
+        logger.debug("Updated object '%s' length: %s", OBJECT_KEY, len(new_stored_content))
 
         assert isinstance(response, dict), "Response must be of dictionary type"
         assert response['message'] == "Object written successfully", "Unsuccessful object write in response"
@@ -142,12 +211,28 @@ class TestS3Integration:
         updated_content = b"abcdefghij"
 
         # Write and read initial content on bucket
+        logger.debug(
+            "Writing initial content to object '%s' in bucket '%s': length=%s",
+            object_key,
+            existing_bucket,
+            len(initial_content),
+        )
         first_write = storage.write_object(existing_bucket, object_key, initial_content)
+        logger.debug("First write response: %s", first_write)
         first_size = storage.get_object_size(existing_bucket, object_key)
+        logger.debug("First recorded object size for '%s': %s", object_key, first_size)
 
         # Write and read second content (different size) on bucket
+        logger.debug(
+            "Writing updated content to object '%s' in bucket '%s': length=%s",
+            object_key,
+            existing_bucket,
+            len(updated_content),
+        )
         second_write = storage.write_object(existing_bucket, object_key, updated_content)
+        logger.debug("Second write response: %s", second_write)
         second_size = storage.get_object_size(existing_bucket, object_key)
+        logger.debug("Second recorded object size for '%s': %s", object_key, second_size)
 
         assert first_write["message"] == "Object written successfully", "A problem ocurr wirting on the object"
         assert first_size == len(initial_content), "File size and inital size content in file should match"
@@ -167,13 +252,17 @@ class TestS3Integration:
             bucket_with_object: bucket fixture that already contains OBJECT_KEY
         """
         # Delete existing object in bucket
+        logger.debug("Deleting object '%s' in bucket: %s", OBJECT_KEY, bucket_with_object)
         delete_response = storage.delete_object(bucket_with_object, OBJECT_KEY)
+        logger.debug("Delete response: %s", delete_response)
 
         # List buckets after deletion
         objects_after_delete = storage.list_objects(bucket_with_object)
+        logger.debug("Objects remaining in bucket '%s': %s", bucket_with_object, len(objects_after_delete))
 
         # Look for object by reading it
         read_response = storage.read_object(bucket_with_object, OBJECT_KEY)
+        logger.debug("Read-after-delete response: %s", read_response)
 
         # Confirm object has been deleted
         assert isinstance(delete_response, dict), "Delete response must be of dictionary type"
@@ -201,24 +290,49 @@ class TestS3Integration:
         expected_content = FILE_PATH.read_bytes()
 
         # Upload file
+        logger.debug(
+            "Uploading lifecycle file '%s' (%s bytes) to bucket '%s' as object '%s'",
+            FILE_PATH.name,
+            len(expected_content),
+            existing_bucket,
+            object_key,
+        )
         upload_response = storage.upload_object(existing_bucket, object_key, str(FILE_PATH))
+        logger.debug("Upload response: %s", upload_response)
 
         # List objects and confirm the uploaded file appears
         objects_after_upload = storage.list_objects(existing_bucket)
+        logger.debug("Objects listed after upload in bucket '%s': %s", existing_bucket, len(objects_after_upload))
 
         # Download file
         download_path = tmp_path / object_key
+        logger.debug(
+            "Downloading lifecycle file '%s' from bucket '%s' to '%s'",
+            object_key,
+            existing_bucket,
+            download_path,
+        )
         download_response = storage.download_object(existing_bucket, object_key, str(download_path))
+        logger.debug("Download response: %s", download_response)
 
         # Compare original and downloaded content
         downloaded_content = download_path.read_bytes()
+        logger.debug(
+            "Comparing lifecycle file content lengths: expected=%s downloaded=%s",
+            len(expected_content),
+            len(downloaded_content),
+        )
 
         # Delete file
+        logger.debug("Deleting lifecycle file '%s' from bucket '%s'", object_key, existing_bucket)
         delete_response = storage.delete_object(existing_bucket, object_key)
+        logger.debug("Delete response: %s", delete_response)
 
         # Confirm removal
         objects_after_delete = storage.list_objects(existing_bucket)
         read_after_delete = storage.read_object(existing_bucket, object_key)
+        logger.debug("Objects listed after delete in bucket '%s': %s", existing_bucket, len(objects_after_delete))
+        logger.debug("Read-after-delete response: %s", read_after_delete)
 
         assert isinstance(upload_response, dict), "Upload response must be of dictionary type"
         assert upload_response["message"] == "Object uploaded successfully", "Unsuccessful file upload in response"
@@ -246,12 +360,19 @@ class TestS3Integration:
             existing_bucket: unique bucket already created for the test
         """
         # Upload an empty file to an existing bucket
+        logger.debug(
+            "Uploading empty file '%s' to bucket '%s' as object '%s'",
+            EMPTY_FILE.name,
+            existing_bucket,
+            OBJECT_KEY,
+        )
         response = storage.upload_object(existing_bucket, OBJECT_KEY, str(EMPTY_FILE))
+        logger.debug("Upload response: %s", response)
 
         # Read empty content
         stored_content = storage.read_object(existing_bucket, OBJECT_KEY)
+        logger.debug("Stored empty file length: %s bytes", len(stored_content))
 
         assert isinstance(response, dict), "Response must be of dictionary type"
         assert response['message'] == "Object uploaded successfully", "Unsuccessful object upload in response"
         assert stored_content == EMPTY_FILE.read_bytes(), "Uploaded object content was not persisted correctly"
-

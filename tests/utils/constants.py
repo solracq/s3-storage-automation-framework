@@ -12,6 +12,7 @@ INVALID_BUCKET_NAME = "TEST-b@ck3t"
 OBJECT_KEY = "sample.txt"
 BASE_URL = os.getenv("S3_PUBLIC_ENDPOINT_URL", "http://127.0.0.1:9000")
 CONTENT_DATA = b"Hello from the write_object endpoint"
+NEW_CONTENT = "New data added"
 FILE_PATH = TEST_ASSETS_DIR / "sample.txt"
 IMAGE_PATH = TEST_ASSETS_DIR / "image.png"
 EMPTY_FILE = TEST_ASSETS_DIR / "empty-sample.txt"
