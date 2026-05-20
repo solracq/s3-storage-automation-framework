@@ -7,10 +7,13 @@ and the underlying S3 implementation. This keeps API-service smoke coverage
 separate from storage-behavior smoke coverage.
 """
 
+import logging
 import pytest
 
 from tests.fixtures.api_fixtures import api_client, api_storage, api_bucket_name
 
+
+logger = logging.getLogger(__name__)
 
 pytestmark = [pytest.mark.smoke, pytest.mark.api]
 
@@ -24,7 +27,9 @@ class TestStorageApiSmoke:
             api_client: FastAPI test client.
         """
         # Send a GET request to check the service health
+        logger.debug("Calling GET /health")
         response = api_client.get("/health")
+        logger.debug("Health endpoint response: status=%s body=%s", response.status_code, response.json())
 
         assert response.status_code == 200, "Health endpoint did not return HTTP 200"
         assert response.json() == {
@@ -43,12 +48,15 @@ class TestStorageApiSmoke:
             api_bucket_name: Unique bucket name for the current test.
         """
         # Send a POST request to bootstrap a bucket
+        logger.debug("Calling POST /buckets/bootstrap with bucket_name=%s", api_bucket_name)
         response = api_client.post(
             "/buckets/bootstrap",
             params={"bucket_name": api_bucket_name},
         )
         body = response.json()
         buckets_response = api_storage.list_buckets()
+        logger.debug("Bucket bootstrap response: status=%s body=%s", response.status_code, body)
+        logger.debug("Bucket list response after bootstrap: %s", buckets_response)
 
         assert response.status_code == 200, "Bucket bootstrap did not return HTTP 200"
         assert body["status"] == "ready", "Bucket bootstrap did not report ready status"
@@ -69,12 +77,14 @@ class TestStorageApiSmoke:
             api_bucket_name: Unique bucket name for the current test.
         """
         # Send a POST request to bootstrap a bucket
+        logger.debug("Calling first POST /buckets/bootstrap with bucket_name=%s", api_bucket_name)
         first_response = api_client.post(
             "/buckets/bootstrap",
             params={"bucket_name": api_bucket_name},
         )
 
         # Send a scond POST request to bootstrap a bucket
+        logger.debug("Calling second POST /buckets/bootstrap with bucket_name=%s", api_bucket_name)
         second_response = api_client.post(
             "/buckets/bootstrap",
             params={"bucket_name": api_bucket_name},
@@ -86,6 +96,14 @@ class TestStorageApiSmoke:
 
         # List buckets
         buckets_response = api_storage.list_buckets()
+        logger.debug(
+            "Bootstrap idempotence responses: first_status=%s first_body=%s second_status=%s second_body=%s",
+            first_response.status_code,
+            first_body,
+            second_response.status_code,
+            second_body,
+        )
+        logger.debug("Bucket list response after repeated bootstrap: %s", buckets_response)
 
         assert first_response.status_code == 200, "First bootstrap call did not return HTTP 200"
         assert second_response.status_code == 200, "Second bootstrap call did not return HTTP 200"
