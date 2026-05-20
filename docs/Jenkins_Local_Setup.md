@@ -135,12 +135,3 @@ nohup java -jar "$HOME/jenkins-local/war/jenkins.war" --httpPort=8080 \
 echo $! > "$HOME/jenkins-local/jenkins.pid"
 ```
 
-## Next step after the controller is running
-
-Once Jenkins is up, the next task for this repository is to add a `Jenkinsfile` with stages for:
-
-1. Build
-2. Unit tests
-3. Smoke tests
-4. Regression tests
-5. Test report publication
