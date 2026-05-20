@@ -251,3 +251,54 @@ pytest -v -m smoke -s
 ```text
 pytest -v -m "smoke and api"
 ```
+
+## Jenkins Pipeline
+
+This repository includes a `Jenkinsfile` that defines a local CI pipeline for:
+
+- Build
+- Unit tests
+- Smoke tests
+- Regression tests
+- Test report publication
+
+For a local Jenkins controller setup on macOS, see [docs/Jenkins_Local_Setup.md](docs/Jenkins_Local_Setup.md).
+
+### Jenkins Native Test Metrics
+
+After a build finishes, open the Jenkins build page and go to:
+
+- `Test Result`
+
+Jenkins parses the JUnit XML files published by the pipeline and shows:
+
+- pass counts
+- fail counts
+- skip counts
+- built-in historical test trends across builds
+
+### Custom Jenkins Report
+
+The pipeline also publishes a custom HTML summary report. From the Jenkins build page, open:
+
+- `S3_Test_Summary`
+
+That report shows:
+
+- total tests
+- passed
+- failed
+- skipped
+- duration
+- per-suite table
+- a current-build stacked bar chart
+
+### Jenkins Artifacts
+
+The pipeline archives the generated report assets under `reports/`, including:
+
+- `reports/junit/` for JUnit XML files
+- `reports/html/index.html` for the custom HTML summary
+- `reports/artifacts/test-summary.json`
+- `reports/artifacts/test-summary.txt`
+- `reports/artifacts/test-metrics.csv`
