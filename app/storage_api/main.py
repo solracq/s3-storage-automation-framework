@@ -146,7 +146,7 @@ async def list_files(bucket_name: str):
 @app.get("/objects/{object_key}/metadata")
 async def get_object_metadata(bucket_name: str, object_key: str):
     """
-    Retrieve metadata for an object in a bucket.
+    Retrieve metadata for an object in bucket.
 
     Args:
         bucket_name (str): Name of the bucket containing the object.
