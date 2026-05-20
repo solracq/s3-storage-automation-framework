@@ -206,6 +206,26 @@ Result:
 
 ## Automated Tests
 
+### Pytest Logging
+Pytest logging is configured centrally in [tests/conftest.py](tests/conftest.py) so every suite writes a persistent test log while still keeping console output manageable for local runs and CI.
+
+- Console logging defaults to `INFO`
+- File logging defaults to `DEBUG`
+- Test logs are written to `tests/logs/S3TestLog.txt`
+- Python warnings are captured into the same logging system
+
+This means:
+- local and Jenkins runs can stay readable in the terminal/console
+- a more detailed debug log is still available for troubleshooting failures afterward
+
+Optional environment overrides:
+```text
+PYTEST_CONSOLE_LOG_LEVEL=DEBUG
+PYTEST_FILE_LOG_LEVEL=DEBUG
+PYTEST_LOG_DIR=tests/logs
+PYTEST_LOG_FILE=S3TestLog.txt
+```
+
 ### Running Unit Test Suite
 ```text
 ./s3venv/bin/pytest tests/unit -q
@@ -222,8 +242,12 @@ Result:
 ./s3venv/bin/pytest tests/unit/test_s3_resource.py -q
 ```
 
-### Running Smoke Test Suite
+### Running Smoke Test Suite (with logging information)
 ```text
 pytest -v -m smoke -s
 ```
 
+### Running Smoke and API Test Suites (without console log output)
+```text
+pytest -v -m "smoke and api"
+```
