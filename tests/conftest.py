@@ -2,6 +2,7 @@ import os
 import sys
 import pytest
 import logging
+from contextvars import ContextVar
 from pathlib import Path
 
 from botocore.exceptions import ClientError
@@ -20,6 +21,18 @@ os.environ.setdefault("AWS_ACCESS_KEY_ID", "minioadmin")
 os.environ.setdefault("AWS_SECRET_ACCESS_KEY", "minioadmin123")
 os.environ.setdefault("AWS_REGION", "us-east-1")
 os.environ.setdefault("MINIO_BUCKET_NAME", "test-bucket")
+
+CURRENT_TEST = ContextVar("current_test", default="-")
+
+
+class TestContextFilter(logging.Filter):
+    """
+    Inject the current pytest test node id into each log record.
+    """
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        record.test_name = CURRENT_TEST.get()
+        return True
 
 
 def make_client_error(code: str, operation_name: str = "TestOperation") -> ClientError:
@@ -75,21 +88,23 @@ def pytest_configure(config):
     logger.setLevel(root_level)
 
     console_formatter = logging.Formatter(
-        "%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
+        "%(asctime)s | %(levelname)-8s | %(test_name)s | %(name)s | %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )
     file_formatter = logging.Formatter(
-        "%(asctime)s | %(levelname)-8s | %(name)s | %(filename)s:%(lineno)d | %(message)s",
+        "%(asctime)s | %(levelname)-8s | %(test_name)s | %(name)s | %(filename)s:%(lineno)d | %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )
 
     console = logging.StreamHandler(sys.stdout)
     console.setLevel(console_level)
     console.setFormatter(console_formatter)
+    console.addFilter(TestContextFilter())
 
     file_handler = logging.FileHandler(log_file, mode="w", encoding="utf-8")
     file_handler.setLevel(file_level)
     file_handler.setFormatter(file_formatter)
+    file_handler.addFilter(TestContextFilter())
 
     # Reset any existing root handlers so repeated test runs do not duplicate logs.
     logger.handlers.clear()
@@ -113,3 +128,20 @@ def pytest_configure(config):
         logging.getLevelName(file_level),
         log_file,
     )
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_protocol(item, nextitem):
+    """
+    Attach the current test node id to log records during the full test lifecycle.
+
+    Args:
+        item: The pytest test item being executed.
+        nextitem: The next scheduled pytest item.
+    """
+    _ = nextitem
+    token = CURRENT_TEST.set(item.nodeid)
+    try:
+        yield
+    finally:
+        CURRENT_TEST.reset(token)
