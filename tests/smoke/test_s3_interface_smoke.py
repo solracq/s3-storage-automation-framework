@@ -9,7 +9,11 @@ API-service smoke coverage.
 
 import pytest
 
-from tests.utils.constants import OBJECT_KEY, CONTENT_DATA, FILE_PATH
+from tests.utils.constants import (
+    OBJECT_KEY, 
+    CONTENT_DATA, 
+    FILE_PATH)
+
 
 from tests.fixtures.s3_fixtures import (
     storage,

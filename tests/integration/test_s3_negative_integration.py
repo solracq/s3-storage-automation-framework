@@ -2,7 +2,11 @@ import pytest
 
 from botocore.exceptions import ParamValidationError
 
-from tests.utils.constants import OBJECT_KEY, INVALID_BUCKET_NAME, LARGE_FILE_SIZE_LIMIT_EXEEDED
+from tests.utils.constants import (
+    OBJECT_KEY, 
+    INVALID_BUCKET_NAME, 
+    LARGE_FILE_SIZE_LIMIT_EXEEDED
+    )
 
 from tests.fixtures.s3_fixtures import (
     storage,
