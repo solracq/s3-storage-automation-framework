@@ -6,6 +6,7 @@ Outputs:
 - reports/html/index.html
 - reports/artifacts/test-summary.json
 - reports/artifacts/test-summary.txt
+- reports/artifacts/build-description.txt
 - reports/artifacts/test-metrics.csv
 """
 
@@ -404,6 +405,14 @@ def main() -> int:
         )
 
     (artifact_dir / "test-summary.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+    build_description = (
+        f"Pass {total_passed} | Fail {total_failed} | Skip {total_skipped}"
+    )
+    (artifact_dir / "build-description.txt").write_text(
+        build_description + "\n",
+        encoding="utf-8",
+    )
 
     with (artifact_dir / "test-metrics.csv").open("w", newline="", encoding="utf-8") as file_handle:
         writer = csv.writer(file_handle)

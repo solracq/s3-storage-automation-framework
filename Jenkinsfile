@@ -204,10 +204,10 @@ EOF
                     reportName: 'S3_Test_Summary'
                 ])
                 script {
-                    def summary = new groovy.json.JsonSlurperClassic().parseText(
-                        readFile("${REPORT_DIR}/artifacts/test-summary.json")
-                    )
-                    currentBuild.description = "Pass ${summary.total.passed} | Fail ${summary.total.failed} | Skip ${summary.total.skipped}"
+                    # This avoids needing manual approvals every time. 
+                    currentBuild.description = readFile(
+                        "${REPORT_DIR}/artifacts/build-description.txt"
+                    ).trim()
                 }
                 archiveArtifacts allowEmptyArchive: true, artifacts: 'reports/**/*'
             }
