@@ -27,13 +27,11 @@ Keeping both implementations in the repository makes it easier to compare low-le
 - Object upload/download/delete
 - Metadata validation
 - Object versioning, if enabled
-- Presigned URL generation
 - Negative cases: wrong credentials, missing bucket, missing object, invalid file type
-- Storage quota simulation
-- Retry behavior for temporary service unavailability
-- Audit/log validation from container logs
+- API level validation
+- Integration level validation
 
-## Initial folder structure
+## Folder structure
 
 ```text
 s3_storage_automation/
