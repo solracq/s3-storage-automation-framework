@@ -1,6 +1,19 @@
 pipeline {
     agent any
 
+    parameters {
+        booleanParam(
+            name: 'SEND_EMAIL_NOTIFICATIONS',
+            defaultValue: false,
+            description: 'Send post-build emails through the email-ext plugin.'
+        )
+        string(
+            name: 'EMAIL_RECIPIENTS',
+            defaultValue: '',
+            description: 'Optional comma-separated email recipients for build notifications.'
+        )
+    }
+
     // Set job behavior
     options {
         disableConcurrentBuilds()
@@ -14,6 +27,7 @@ pipeline {
         VENV_DIR = '.venv'
         REPORT_DIR = 'reports'
         JUNIT_DIR = 'reports/junit'
+        REPORT_HTML_DIR = 'reports/html'
         PYTEST_LOG_ROOT = 'reports/logs'
         COMPOSE_PROJECT_NAME = "s3-ci-${BUILD_NUMBER}" // Isolates Docker resources by build number 
         MINIO_API_HOST_PORT = '19000'
@@ -28,7 +42,7 @@ pipeline {
                     set -eu
                     export PATH="${BASE_PATH}:$PATH"
 
-                    mkdir -p "${REPORT_DIR}" "${JUNIT_DIR}" "${PYTEST_LOG_ROOT}" "${REPORT_DIR}/artifacts"
+                    mkdir -p "${REPORT_DIR}" "${JUNIT_DIR}" "${REPORT_HTML_DIR}" "${PYTEST_LOG_ROOT}" "${REPORT_DIR}/artifacts"
 
                     # Build a CI-specific .env
                     minio_user="${MINIO_ROOT_USER:-minioadmin}"
@@ -162,18 +176,126 @@ EOF
                     set +e
                     export PATH="${BASE_PATH}:$PATH"
 
-                    mkdir -p "${REPORT_DIR}/artifacts"
+                    mkdir -p "${REPORT_DIR}/artifacts" "${REPORT_HTML_DIR}"
                     docker compose ps > "${REPORT_DIR}/artifacts/docker-compose-ps.txt" 2>&1 || true
                     docker compose logs --no-color minio > "${REPORT_DIR}/artifacts/minio.log" 2>&1 || true
                 '''
 
-                junit allowEmptyResults: true, testResults: "${JUNIT_DIR}/*.xml"
+                sh '''
+                    set -eu
+                    export PATH="${BASE_PATH}:$PATH"
+
+                    "${VENV_DIR}/bin/python" scripts/generate_jenkins_test_report.py \
+                      --input-dir "${JUNIT_DIR}" \
+                      --html-dir "${REPORT_HTML_DIR}" \
+                      --artifact-dir "${REPORT_DIR}/artifacts" \
+                      --job-name "${JOB_NAME:-}" \
+                      --build-number "${BUILD_NUMBER:-}" \
+                      --build-url "${BUILD_URL:-}"
+                '''
+
+                junit allowEmptyResults: true, keepLongStdio: true, testResults: "${JUNIT_DIR}/*.xml"
+                publishHTML(target: [
+                    allowMissing: true,
+                    alwaysLinkToLastBuild: true,
+                    keepAll: true,
+                    reportDir: "${REPORT_HTML_DIR}",
+                    reportFiles: 'index.html',
+                    reportName: 'S3_Test_Summary'
+                ])
+                script {
+                    def summary = new groovy.json.JsonSlurperClassic().parseText(
+                        readFile("${REPORT_DIR}/artifacts/test-summary.json")
+                    )
+                    currentBuild.description = "Pass ${summary.total.passed} | Fail ${summary.total.failed} | Skip ${summary.total.skipped}"
+                }
                 archiveArtifacts allowEmptyArchive: true, artifacts: 'reports/**/*'
             }
         }
     }
 
     post {
+        success {
+            script {
+                if (params.SEND_EMAIL_NOTIFICATIONS && params.EMAIL_RECIPIENTS?.trim()) {
+                    def summaryText = fileExists("${REPORT_DIR}/artifacts/test-summary.txt")
+                        ? readFile("${REPORT_DIR}/artifacts/test-summary.txt").trim()
+                        : 'Test summary was not generated.'
+                    try {
+                        emailext(
+                            to: params.EMAIL_RECIPIENTS.trim(),
+                            subject: "[SUCCESS] ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                            mimeType: 'text/html',
+                            body: """
+                                <p><strong>Build result:</strong> SUCCESS</p>
+                                <pre>${summaryText}</pre>
+                                <p><a href="${env.BUILD_URL}testReport/">JUnit Test Report</a></p>
+                                <p><a href="${env.BUILD_URL}artifact/reports/html/index.html">HTML Test Summary</a></p>
+                                <p><a href="${env.BUILD_URL}artifact/reports/">Build Artifacts</a></p>
+                            """
+                        )
+                    } catch (err) {
+                        echo "Email notification failed: ${err.message}"
+                    }
+                } else {
+                    echo 'Email notifications skipped: SEND_EMAIL_NOTIFICATIONS is false or EMAIL_RECIPIENTS is empty.'
+                }
+            }
+        }
+        unstable {
+            script {
+                if (params.SEND_EMAIL_NOTIFICATIONS && params.EMAIL_RECIPIENTS?.trim()) {
+                    def summaryText = fileExists("${REPORT_DIR}/artifacts/test-summary.txt")
+                        ? readFile("${REPORT_DIR}/artifacts/test-summary.txt").trim()
+                        : 'Test summary was not generated.'
+                    try {
+                        emailext(
+                            to: params.EMAIL_RECIPIENTS.trim(),
+                            subject: "[UNSTABLE] ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                            mimeType: 'text/html',
+                            body: """
+                                <p><strong>Build result:</strong> UNSTABLE</p>
+                                <pre>${summaryText}</pre>
+                                <p><a href="${env.BUILD_URL}testReport/">JUnit Test Report</a></p>
+                                <p><a href="${env.BUILD_URL}artifact/reports/html/index.html">HTML Test Summary</a></p>
+                                <p><a href="${env.BUILD_URL}artifact/reports/">Build Artifacts</a></p>
+                            """
+                        )
+                    } catch (err) {
+                        echo "Email notification failed: ${err.message}"
+                    }
+                } else {
+                    echo 'Email notifications skipped: SEND_EMAIL_NOTIFICATIONS is false or EMAIL_RECIPIENTS is empty.'
+                }
+            }
+        }
+        failure {
+            script {
+                if (params.SEND_EMAIL_NOTIFICATIONS && params.EMAIL_RECIPIENTS?.trim()) {
+                    def summaryText = fileExists("${REPORT_DIR}/artifacts/test-summary.txt")
+                        ? readFile("${REPORT_DIR}/artifacts/test-summary.txt").trim()
+                        : 'Test summary was not generated.'
+                    try {
+                        emailext(
+                            to: params.EMAIL_RECIPIENTS.trim(),
+                            subject: "[FAILURE] ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                            mimeType: 'text/html',
+                            body: """
+                                <p><strong>Build result:</strong> FAILURE</p>
+                                <pre>${summaryText}</pre>
+                                <p><a href="${env.BUILD_URL}testReport/">JUnit Test Report</a></p>
+                                <p><a href="${env.BUILD_URL}artifact/reports/html/index.html">HTML Test Summary</a></p>
+                                <p><a href="${env.BUILD_URL}artifact/reports/">Build Artifacts</a></p>
+                            """
+                        )
+                    } catch (err) {
+                        echo "Email notification failed: ${err.message}"
+                    }
+                } else {
+                    echo 'Email notifications skipped: SEND_EMAIL_NOTIFICATIONS is false or EMAIL_RECIPIENTS is empty.'
+                }
+            }
+        }
         always {
             sh '''
                 set +e
