@@ -1,4 +1,5 @@
 # s3-storage-automation-framework
+Python-based automation framework for validating S3-compatible storage workflows, API behavior, and test reporting.
 
 Amazon Simple Storage Service (Amazon S3) is an object storage service that provides high durability, availability and performance. Data can be accessed from anywhere via Internet, through Amazon Console and S3 API. S3 storage service stores data as objects within buckets. An object is a file and any metadata that describes the file. A bucket is a container for objects.
 
