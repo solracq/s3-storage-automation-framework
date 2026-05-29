@@ -315,3 +315,10 @@ The pipeline archives the generated report assets under `reports/`, including:
 This project was designed and implemented by the maintainer as a personal SDET portfolio project. OpenAI Codex 5.4 and Cursor/VS Code were used as development assistants for selective scaffolding, code suggestions, refactoring ideas, code review support, troubleshooting, and documentation drafting.
 
 All AI-assisted output was reviewed, adapted, tested, and validated by the maintainer before commit or merge. The test strategy, framework design, implementation decisions, and final quality accountability remained with the project maintainer.
+
+## Copyright
+Copyright (C) 2026 Carlos Alberto Quiroz
+
+All rights reserved.
+
+This repository is published publicly for portfolio review only. Except for viewing and forking as enabled by GitHub platform functionality, no permission is granted to reuse, modify, redistribute, republish, or present this work as your own, in whole or in part, without prior written permission.
